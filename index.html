@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AlcoTrack">
+  <meta name="theme-color" content="#0d0d14">
+  <title>AlcoTrack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Loading splash (shown until auth check completes) -->
+<div id="loading-screen">
+  <div class="loading-logo">AlcoTrack</div>
+  <div class="loading-sub">loading…</div>
+</div>
+
+<!-- Auth screen (injected by auth-screen.js) -->
+<div id="auth-screen"></div>
+
+<!-- Sync status dot -->
+<div id="sync-dot" class="sync-dot" aria-label="Sync status"></div>
+
+<!-- Main app -->
+<div id="app" style="display:none">
+  <div id="main-content">
+
+    <!-- ========= TODAY ========= -->
+    <div id="page-today" class="page active">
+      <div class="bac-hero">
+        <div class="bac-label-top">Blood Alcohol Content</div>
+        <div class="bac-number mono" id="bac-display">0.00</div>
+        <div class="bac-unit-text" id="bac-unit-label">‰ permille</div>
+        <div class="bac-bar-wrap" id="bac-bar-wrap">
+          <div class="bac-bar-fill" id="bac-bar-fill" style="width:0%"></div>
+          <div class="bac-legal-marker" id="bac-legal-marker" style="left:50%"></div>
+          <div class="bac-legal-label" id="bac-legal-label" style="left:50%">LIMIT</div>
+        </div>
+        <div class="bac-status bac-safe" id="bac-status">— Sober —</div>
+        <div class="bac-sober-time" id="bac-sober-time"></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-value mono" id="today-units">0.0</div>
+          <div class="stat-label">Units</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value mono" id="today-drinks">0</div>
+          <div class="stat-label">Drinks</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value mono" id="today-cal">0</div>
+          <div class="stat-label">Cals ~</div>
+        </div>
+      </div>
+
+      <div class="drink-log-section">
+        <div class="drink-log-title">Today's Log</div>
+        <div id="today-log-list">
+          <div class="empty-state">
+            <div class="empty-icon">🍺</div>
+            Tap + to log a drink
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= LOG ========= -->
+    <div id="page-log" class="page">
+      <div class="page-header">
+        <div class="page-title">History</div>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- ========= STATS ========= -->
+    <div id="page-stats" class="page">
+      <div class="page-header">
+        <div class="page-title">Stats</div>
+      </div>
+      <div style="padding: 0 16px 16px;">
+        <div class="chart-wrap">
+          <div class="chart-title">BAC Today</div>
+          <canvas id="bac-chart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-title">Units This Week</div>
+          <canvas id="week-chart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-title">Weekly Goal</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-family:'DM Mono';font-size:22px;color:var(--accent2);" id="goal-used">0.0</span>
+            <span style="font-size:13px;color:var(--muted);" id="goal-limit-label">of 14 units</span>
+          </div>
+          <div class="goal-bar-wrap">
+            <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);text-align:right;" id="goal-pct">0% used</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-card-value mono" id="stat-week-total">0.0</div><div class="stat-card-label">Week units</div></div>
+          <div class="stat-card"><div class="stat-card-value mono" id="stat-month-total">0.0</div><div class="stat-card-label">Month units</div></div>
+          <div class="stat-card"><div class="stat-card-value mono" id="stat-avg-day">0.0</div><div class="stat-card-label">Avg/day</div></div>
+          <div class="stat-card"><div class="stat-card-value mono" id="stat-sober-days">0</div><div class="stat-card-label">Sober days</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= SETTINGS ========= -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <div class="page-title">Profile</div>
+      </div>
+
+      <div class="settings-section-title">Body</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div><div class="settings-row-label">Gender</div><div class="settings-row-sub">Affects BAC calculation</div></div>
+          <select class="settings-select" id="s-gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Body Weight</div><div class="settings-row-sub">Used in Widmark formula</div></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="number" class="settings-input" id="s-weight" value="75" min="30" max="250">
+            <select class="settings-select" id="s-weight-unit" style="min-width:60px;">
+              <option value="kg">kg</option>
+              <option value="lb">lb</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Display</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div><div class="settings-row-label">BAC Unit</div></div>
+          <select class="settings-select" id="s-bac-unit">
+            <option value="permille">‰ Permille</option>
+            <option value="percent">% BAC</option>
+            <option value="mg100ml">mg/100ml</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Volume Unit</div></div>
+          <select class="settings-select" id="s-vol-unit">
+            <option value="ml">ml</option>
+            <option value="oz">fl oz</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Currency</div></div>
+          <select class="settings-select" id="s-currency">
+            <option value="£">£ GBP</option>
+            <option value="€">€ EUR</option>
+            <option value="$">$ USD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Limits</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div><div class="settings-row-label">Weekly Unit Goal</div><div class="settings-row-sub">UK guideline: 14 units</div></div>
+          <input type="number" class="settings-input" id="s-weekly-goal" value="14" min="1" max="100">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Legal Limit</div><div class="settings-row-sub">‰ permille (UK: 0.80)</div></div>
+          <select class="settings-select" id="s-legal-limit">
+            <option value="0.50">0.50 ‰</option>
+            <option value="0.80" selected>0.80 ‰</option>
+            <option value="1.00">1.00 ‰</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Data</div>
+      <div class="settings-card">
+        <div class="settings-row" style="cursor:pointer;" id="btn-export">
+          <div class="settings-row-label">Export Log (CSV)</div>
+          <span style="color:var(--accent2);">→</span>
+        </div>
+        <div class="settings-row" style="cursor:pointer;" id="btn-clear">
+          <div class="settings-row-label" style="color:var(--red);">Clear All Data</div>
+          <span style="color:var(--red);">⚠</span>
+        </div>
+      </div>
+
+      <!-- Account section — shown only when Supabase is enabled -->
+      <div id="account-section" style="display:none">
+        <div class="settings-section-title">Account</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Signed in as</div>
+              <div class="settings-row-sub" id="account-email">—</div>
+            </div>
+          </div>
+          <div class="settings-row" style="cursor:pointer;" id="btn-signout">
+            <div class="settings-row-label" style="color:var(--red);">Sign Out</div>
+            <span style="color:var(--red);">→</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:20px 16px;font-size:12px;color:var(--muted);line-height:1.6;text-align:center;">
+        BAC estimates use the Widmark formula and are approximations only.<br>
+        Never rely on this app to determine fitness to drive.
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <button id="fab" aria-label="Add drink">+</button>
+
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-page="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      NOW
+    </button>
+    <button class="nav-btn" data-page="log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      LOG
+    </button>
+    <button class="nav-btn" data-page="stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      STATS
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      PROFILE
+    </button>
+  </nav>
+</div>
+
+<!-- Add Drink Modal -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log a Drink</div>
+    <div class="label">Quick Select</div>
+    <div class="preset-grid" id="preset-grid"></div>
+    <div class="form-group">
+      <label class="form-label" for="f-name">Drink Name</label>
+      <input type="text" class="form-input" id="f-name" placeholder="e.g. Pint of lager">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Volume (ml)</label>
+        <input type="number" class="form-input" id="f-volume" placeholder="568" min="1" max="2000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ABV %</label>
+        <input type="number" class="form-input" id="f-abv" placeholder="4.5" min="0" max="100" step="0.1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Units (auto)</label>
+      <input type="text" class="form-input" id="f-units-display" readonly placeholder="—" style="color:var(--accent2);">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cost (optional)</label>
+        <input type="number" class="form-input" id="f-cost" placeholder="0.00" min="0" step="0.10">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time</label>
+        <input type="time" class="form-input" id="f-time">
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-add-drink">Log Drink</button>
+    <button class="btn-ghost" id="btn-cancel-modal">Cancel</button>
+  </div>
+</div>
+
+<!-- Migration Modal -->
+<div id="migration-modal">
+  <div class="migration-sheet">
+    <div class="migration-title">Welcome back 👋</div>
+    <div class="migration-body">
+      We found <strong><span id="migration-count">0</span> drinks</strong> stored on this device.
+      Would you like to add them to your account so they're backed up and accessible everywhere?
+    </div>
+    <button class="btn-primary" id="btn-migrate-yes">Add to My Account</button>
+    <button class="btn-ghost" id="btn-migrate-no">Start Fresh</button>
+  </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

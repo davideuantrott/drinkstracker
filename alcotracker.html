@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AlcoTrack">
+<meta name="theme-color" content="#0d0d14">
+<title>AlcoTrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0d0d14;
+    --surface: #14141f;
+    --surface2: #1c1c2e;
+    --border: rgba(255,255,255,0.08);
+    --accent: #7c6af7;
+    --accent2: #c084fc;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --safe: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  /* ---- LAYOUT ---- */
+  #app { height: 100dvh; display: flex; flex-direction: column; position: relative; }
+
+  #main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(80px + var(--safe));
+  }
+
+  /* ---- NAV ---- */
+  #bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(72px + var(--safe));
+    padding-bottom: var(--safe);
+    background: rgba(13,13,20,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    padding-top: 8px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 4px 0;
+  }
+
+  .nav-btn.active { color: var(--accent2); }
+  .nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
+
+  /* ---- PAGES ---- */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ---- SHARED ---- */
+  .section-pad { padding: 20px 16px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .mono { font-family: 'DM Mono', monospace; }
+
+  /* ---- PAGE HEADER ---- */
+  .page-header {
+    padding: 20px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .page-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  /* ========= TODAY PAGE ========= */
+  .bac-hero {
+    background: linear-gradient(135deg, #1a1433 0%, #0d0d14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 20px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bac-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(124,106,247,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .bac-label-top {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .bac-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 72px;
+    font-weight: 300;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    background: linear-gradient(135deg, #a78bfa, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.5s;
+  }
+
+  .bac-unit-text {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .bac-bar-wrap {
+    margin: 18px 0 8px;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: visible;
+    position: relative;
+  }
+
+  .bac-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--green), var(--amber), var(--red));
+    background-size: 300% 100%;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background-position: 0% 0%;
+  }
+
+  .bac-legal-marker {
+    position: absolute;
+    top: -4px;
+    width: 2px; height: 14px;
+    background: var(--amber);
+    border-radius: 1px;
+  }
+
+  .bac-legal-label {
+    position: absolute;
+    top: 14px;
+    font-size: 9px;
+    color: var(--amber);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .bac-status {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-top: 12px;
+  }
+
+  .bac-sober-time {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ---- STATS ROW ---- */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .stat-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--accent2);
+  }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ---- DRINK LOG ---- */
+  .drink-log-section { padding: 0 16px 12px; }
+  .drink-log-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .drink-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .drink-entry-icon {
+    width: 40px; height: 40px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .drink-entry-info { flex: 1; min-width: 0; }
+  .drink-entry-name {
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .drink-entry-meta {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-top: 2px;
+  }
+  .drink-entry-units {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--accent2);
+  }
+  .drink-entry-del {
+    background: none;
+    border: none;
+    color: var(--red);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 4px;
+  }
+  .drink-entry-del:active { opacity: 1; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+
+  /* ---- FAB ---- */
+  #fab {
+    position: fixed;
+    bottom: calc(88px + var(--safe));
+    right: 20px;
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(124,106,247,0.5);
+    z-index: 90;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #fab:active { transform: scale(0.92); box-shadow: 0 4px 12px rgba(124,106,247,0.4); }
+
+  /* ========= ADD DRINK MODAL ========= */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-sheet {
+    width: 100%;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px calc(24px + var(--safe));
+    max-height: 92dvh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  /* ---- FORM ELEMENTS ---- */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .preset-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .preset-chip:active, .preset-chip.selected {
+    background: rgba(124,106,247,0.2);
+    border-color: var(--accent);
+  }
+  .preset-chip-icon { font-size: 22px; }
+  .preset-chip-name {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+    color: var(--muted);
+  }
+  .preset-chip.selected .preset-chip-name { color: var(--accent2); }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 8px;
+  }
+  .btn-primary:active { opacity: 0.8; }
+
+  .btn-ghost {
+    width: 100%;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* ========= LOG PAGE ========= */
+  .day-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 16px 8px;
+  }
+
+  .day-group-date {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .day-group-summary {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ========= STATS PAGE ========= */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  #bac-chart, #week-chart {
+    width: 100%;
+    height: 120px;
+  }
+
+  .goal-bar-wrap {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0 4px;
+  }
+
+  .goal-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--green), var(--amber));
+    transition: width 0.6s;
+  }
+
+  .goal-bar-fill.over { background: var(--red); }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .stat-card-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--accent2);
+  }
+
+  .stat-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ========= SETTINGS PAGE ========= */
+  .settings-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 20px 16px 8px;
+  }
+
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin: 0 16px 12px;
+    overflow: hidden;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .settings-row:last-child { border-bottom: none; }
+
+  .settings-row-label {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .settings-row-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .settings-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 90px;
+    text-align: right;
+    cursor: pointer;
+  }
+
+  .settings-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 400;
+    outline: none;
+    width: 80px;
+    text-align: right;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .toggle {
+    width: 48px; height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* ---- BAC info colours ---- */
+  .bac-safe { color: var(--green); }
+  .bac-caution { color: var(--amber); }
+  .bac-danger { color: var(--red); }
+
+  /* ---- SCROLLBAR ---- */
+  ::-webkit-scrollbar { width: 0; background: transparent; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="main-content">
+
+    <!-- ========= TODAY ========= -->
+    <div id="page-today" class="page active">
+
+      <div class="bac-hero">
+        <div class="bac-label-top">Blood Alcohol Content</div>
+        <div class="bac-number mono" id="bac-display">0.00</div>
+        <div class="bac-unit-text" id="bac-unit-label">‰ permille</div>
+        <div class="bac-bar-wrap" id="bac-bar-wrap">
+          <div class="bac-bar-fill" id="bac-bar-fill" style="width:0%"></div>
+          <div class="bac-legal-marker" id="bac-legal-marker" style="left:50%"></div>
+          <div class="bac-legal-label" id="bac-legal-label" style="left:50%">LIMIT</div>
+        </div>
+        <div class="bac-status" id="bac-status">— Clear to drive —</div>
+        <div class="bac-sober-time" id="bac-sober-time"></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-value mono" id="today-units">0.0</div>
+          <div class="stat-label">Units</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value mono" id="today-drinks">0</div>
+          <div class="stat-label">Drinks</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-value mono" id="today-cal">0</div>
+          <div class="stat-label">Cals ~</div>
+        </div>
+      </div>
+
+      <div class="drink-log-section">
+        <div class="drink-log-title">Today's Log</div>
+        <div id="today-log-list">
+          <div class="empty-state">
+            <div class="empty-icon">🍺</div>
+            Tap + to log a drink
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= LOG ========= -->
+    <div id="page-log" class="page">
+      <div class="page-header">
+        <div class="page-title">History</div>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- ========= STATS ========= -->
+    <div id="page-stats" class="page">
+      <div class="page-header">
+        <div class="page-title">Stats</div>
+      </div>
+      <div style="padding: 0 16px 16px;">
+
+        <div class="chart-wrap">
+          <div class="chart-title">BAC Today</div>
+          <canvas id="bac-chart"></canvas>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-title">Units This Week</div>
+          <canvas id="week-chart"></canvas>
+        </div>
+
+        <div class="chart-wrap" id="goal-section">
+          <div class="chart-title">Weekly Goal</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-family:'DM Mono';font-size:22px;color:var(--accent2);" id="goal-used">0.0</span>
+            <span style="font-size:13px;color:var(--muted);" id="goal-limit-label">of 14 units</span>
+          </div>
+          <div class="goal-bar-wrap">
+            <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);text-align:right;" id="goal-pct">0% used</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-value mono" id="stat-week-total">0.0</div>
+            <div class="stat-card-label">Week units</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value mono" id="stat-month-total">0.0</div>
+            <div class="stat-card-label">Month units</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value mono" id="stat-avg-day">0.0</div>
+            <div class="stat-card-label">Avg/day</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value mono" id="stat-sober-days">0</div>
+            <div class="stat-card-label">Sober days</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========= SETTINGS ========= -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <div class="page-title">Profile</div>
+      </div>
+
+      <div class="settings-section-title">Body</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Gender</div>
+            <div class="settings-row-sub">Affects BAC calculation</div>
+          </div>
+          <select class="settings-select" id="s-gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Body Weight</div>
+            <div class="settings-row-sub">Used in Widmark formula</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input type="number" class="settings-input" id="s-weight" value="75" min="30" max="250">
+            <select class="settings-select" id="s-weight-unit" style="min-width:60px;">
+              <option value="kg">kg</option>
+              <option value="lb">lb</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Display</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">BAC Unit</div>
+          </div>
+          <select class="settings-select" id="s-bac-unit">
+            <option value="permille">‰ Permille</option>
+            <option value="percent">% BAC</option>
+            <option value="mg100ml">mg/100ml</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Volume Unit</div>
+          </div>
+          <select class="settings-select" id="s-vol-unit">
+            <option value="ml">ml</option>
+            <option value="oz">fl oz</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Currency</div>
+          </div>
+          <select class="settings-select" id="s-currency">
+            <option value="£">£ GBP</option>
+            <option value="€">€ EUR</option>
+            <option value="$">$ USD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Limits</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Weekly Unit Goal</div>
+            <div class="settings-row-sub">UK guideline: 14 units</div>
+          </div>
+          <input type="number" class="settings-input" id="s-weekly-goal" value="14" min="1" max="100">
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Legal Limit</div>
+            <div class="settings-row-sub">‰ permille (UK: 0.80)</div>
+          </div>
+          <select class="settings-select" id="s-legal-limit">
+            <option value="0.50">0.50 ‰</option>
+            <option value="0.80" selected>0.80 ‰</option>
+            <option value="1.00">1.00 ‰</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Data</div>
+      <div class="settings-card">
+        <div class="settings-row" style="cursor:pointer;" id="btn-export">
+          <div class="settings-row-label">Export Log (CSV)</div>
+          <span style="color:var(--accent2);">→</span>
+        </div>
+        <div class="settings-row" style="cursor:pointer;" id="btn-clear">
+          <div class="settings-row-label" style="color:var(--red);">Clear All Data</div>
+          <span style="color:var(--red);">⚠</span>
+        </div>
+      </div>
+
+      <div style="padding:20px 16px;font-size:12px;color:var(--muted);line-height:1.6;text-align:center;">
+        BAC estimates use the Widmark formula and are approximations only.<br>
+        Never rely on this app to determine fitness to drive.
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- FAB -->
+  <button id="fab" aria-label="Add drink">+</button>
+
+  <!-- Bottom Nav -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-page="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      NOW
+    </button>
+    <button class="nav-btn" data-page="log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      LOG
+    </button>
+    <button class="nav-btn" data-page="stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      STATS
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      PROFILE
+    </button>
+  </nav>
+</div>
+
+<!-- ========= ADD DRINK MODAL ========= -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log a Drink</div>
+
+    <div class="label">Quick Select</div>
+    <div class="preset-grid" id="preset-grid"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="f-name">Drink Name</label>
+      <input type="text" class="form-input" id="f-name" placeholder="e.g. Pint of lager">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Volume (ml)</label>
+        <input type="number" class="form-input" id="f-volume" placeholder="568" min="1" max="2000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ABV %</label>
+        <input type="number" class="form-input" id="f-abv" placeholder="4.5" min="0" max="100" step="0.1">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Units (auto)</label>
+      <input type="text" class="form-input" id="f-units-display" readonly placeholder="—" style="color:var(--accent2);">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cost (optional)</label>
+        <input type="number" class="form-input" id="f-cost" placeholder="0.00" min="0" step="0.10">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time</label>
+        <input type="time" class="form-input" id="f-time">
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-add-drink">Log Drink</button>
+    <button class="btn-ghost" id="btn-cancel-modal">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ===================== STATE =====================
+const DEFAULT_SETTINGS = {
+  gender: 'male',
+  weightKg: 75,
+  weightUnit: 'kg',
+  bacUnit: 'permille',
+  volUnit: 'ml',
+  currency: '£',
+  weeklyGoal: 14,
+  legalLimit: 0.80
+};
+
+let settings = JSON.parse(localStorage.getItem('at-settings') || 'null') || {...DEFAULT_SETTINGS};
+let log = JSON.parse(localStorage.getItem('at-log') || '[]'); // array of entry objects
+
+function saveSettings() { localStorage.setItem('at-settings', JSON.stringify(settings)); }
+function saveLog() { localStorage.setItem('at-log', JSON.stringify(log)); }
+
+// ===================== PRESETS =====================
+const PRESETS = [
+  { icon: '🍺', name: 'Pint Lager',   vol: 568, abv: 4.5 },
+  { icon: '🍷', name: 'Wine 175ml',   vol: 175, abv: 13.0 },
+  { icon: '🥃', name: 'Spirit 25ml',  vol: 25,  abv: 40.0 },
+  { icon: '🍻', name: 'Half Lager',   vol: 284, abv: 4.5 },
+  { icon: '🍹', name: 'Bottle WKD',   vol: 275, abv: 4.0 },
+  { icon: '🥂', name: 'Prosecco',     vol: 125, abv: 11.0 },
+  { icon: '🍸', name: 'Cocktail',     vol: 150, abv: 12.0 },
+  { icon: '🍾', name: 'Bottle Beer',  vol: 330, abv: 5.0 },
+  { icon: '🥃', name: 'Double',       vol: 50,  abv: 40.0 }
+];
+
+// ===================== BAC CALC =====================
+// Widmark formula
+function calcBACPermille(drinks) {
+  // r = body water constant: male 0.68, female 0.55
+  const r = settings.gender === 'female' ? 0.55 : 0.68;
+  const weightKg = settings.weightUnit === 'lb'
+    ? parseFloat(settings.weightKg) * 0.453592
+    : parseFloat(settings.weightKg);
+  const now = Date.now();
+
+  // Sum alcohol consumed from each drink, minus metabolism since consumed
+  let totalPermille = 0;
+  for (const d of drinks) {
+    const drinkTime = d.timestamp;
+    const hoursElapsed = (now - drinkTime) / 3600000;
+    const alcoholGrams = (d.volumeMl * d.abv / 100) * 0.789;
+    const peakBAC = (alcoholGrams / (weightKg * r * 10));
+    const metabolised = 0.15 * hoursElapsed; // ~0.15 permille/hr
+    const currentContrib = Math.max(0, peakBAC - metabolised);
+    totalPermille += currentContrib;
+  }
+  return Math.max(0, totalPermille);
+}
+
+function formatBAC(permille) {
+  switch (settings.bacUnit) {
+    case 'percent':   return (permille / 10).toFixed(3);
+    case 'mg100ml':   return Math.round(permille * 100).toString();
+    default:          return permille.toFixed(2);
+  }
+}
+
+function bacUnitLabel() {
+  switch (settings.bacUnit) {
+    case 'percent':  return '% BAC';
+    case 'mg100ml':  return 'mg/100ml';
+    default:         return '‰ permille';
+  }
+}
+
+function calcUnits(volumeMl, abv) {
+  return (volumeMl * abv) / 1000;
+}
+
+function approxCalories(volumeMl, abv) {
+  // ~7 kcal/g ethanol, ethanol density 0.789
+  return Math.round((volumeMl * abv / 100) * 0.789 * 7);
+}
+
+// ===================== TODAY'S DRINKS =====================
+function getTodayDrinks() {
+  const start = new Date(); start.setHours(0,0,0,0);
+  return log.filter(d => d.timestamp >= start.getTime());
+}
+
+function getBACColor(permille) {
+  const limit = parseFloat(settings.legalLimit);
+  if (permille === 0) return 'var(--green)';
+  if (permille < limit * 0.5) return 'var(--green)';
+  if (permille < limit) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function getSoberTime(permille) {
+  if (permille <= 0) return '';
+  const hrs = permille / 0.15;
+  const h = Math.floor(hrs);
+  const m = Math.round((hrs - h) * 60);
+  return `Sober in ~${h > 0 ? h + 'h ' : ''}${m}m`;
+}
+
+// ===================== RENDER TODAY =====================
+function renderToday() {
+  const drinks = getTodayDrinks();
+  const bac = calcBACPermille(drinks);
+  const units = drinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0);
+  const cals = drinks.reduce((s, d) => s + approxCalories(d.volumeMl, d.abv), 0);
+  const limit = parseFloat(settings.legalLimit);
+  const maxBar = limit * 2.5;
+
+  document.getElementById('bac-display').textContent = formatBAC(bac);
+  document.getElementById('bac-unit-label').textContent = bacUnitLabel();
+  document.getElementById('today-units').textContent = units.toFixed(1);
+  document.getElementById('today-drinks').textContent = drinks.length;
+  document.getElementById('today-cal').textContent = cals;
+
+  // Bar
+  const pct = Math.min(100, (bac / maxBar) * 100);
+  document.getElementById('bac-bar-fill').style.width = pct + '%';
+  const legalPct = (limit / maxBar) * 100;
+  document.getElementById('bac-legal-marker').style.left = legalPct + '%';
+  document.getElementById('bac-legal-label').style.left = legalPct + '%';
+
+  // Status
+  const color = getBACColor(bac);
+  const statusEl = document.getElementById('bac-status');
+  if (bac === 0) {
+    statusEl.textContent = '— Sober —';
+    statusEl.className = 'bac-status bac-safe';
+  } else if (bac < limit * 0.5) {
+    statusEl.textContent = 'Below legal limit';
+    statusEl.className = 'bac-status bac-safe';
+  } else if (bac < limit) {
+    statusEl.textContent = 'Approaching limit';
+    statusEl.className = 'bac-status bac-caution';
+  } else {
+    statusEl.textContent = 'Over legal limit';
+    statusEl.className = 'bac-status bac-danger';
+  }
+
+  document.getElementById('bac-sober-time').textContent = getSoberTime(bac);
+
+  // Log list
+  const listEl = document.getElementById('today-log-list');
+  if (drinks.length === 0) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🍺</div>Tap + to log a drink</div>`;
+    return;
+  }
+  listEl.innerHTML = [...drinks].reverse().map(d => {
+    const preset = PRESETS.find(p => p.name === d.name) || { icon: '🥤' };
+    const t = new Date(d.timestamp);
+    const timeStr = t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const u = calcUnits(d.volumeMl, d.abv).toFixed(1);
+    const costStr = d.cost > 0 ? ` · ${settings.currency}${parseFloat(d.cost).toFixed(2)}` : '';
+    return `
+      <div class="drink-entry">
+        <div class="drink-entry-icon">${preset.icon}</div>
+        <div class="drink-entry-info">
+          <div class="drink-entry-name">${d.name}</div>
+          <div class="drink-entry-meta">${d.volumeMl}ml · ${d.abv}% · ${timeStr}${costStr}</div>
+        </div>
+        <div class="drink-entry-units">${u}</div>
+        <button class="drink-entry-del" data-id="${d.id}" aria-label="Delete">✕</button>
+      </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.drink-entry-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.currentTarget.dataset.id;
+      log = log.filter(d => d.id !== id);
+      saveLog();
+      renderToday();
+      if (currentPage === 'stats') renderStats();
+    });
+  });
+}
+
+// ===================== RENDER LOG =====================
+function renderLog() {
+  const el = document.getElementById('history-list');
+  if (log.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding-top:60px;"><div class="empty-icon">📋</div>No drinks logged yet</div>`;
+    return;
+  }
+  // Group by day
+  const groups = {};
+  for (const d of [...log].reverse()) {
+    const day = new Date(d.timestamp).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    if (!groups[day]) groups[day] = [];
+    groups[day].push(d);
+  }
+  el.innerHTML = Object.entries(groups).map(([day, drinks]) => {
+    const units = drinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0);
+    const items = drinks.map(d => {
+      const preset = PRESETS.find(p => p.name === d.name) || { icon: '🥤' };
+      const t = new Date(d.timestamp);
+      const timeStr = t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const u = calcUnits(d.volumeMl, d.abv).toFixed(1);
+      const costStr = d.cost > 0 ? ` · ${settings.currency}${parseFloat(d.cost).toFixed(2)}` : '';
+      return `
+        <div class="drink-entry">
+          <div class="drink-entry-icon">${preset.icon}</div>
+          <div class="drink-entry-info">
+            <div class="drink-entry-name">${d.name}</div>
+            <div class="drink-entry-meta">${d.volumeMl}ml · ${d.abv}% · ${timeStr}${costStr}</div>
+          </div>
+          <div class="drink-entry-units">${u}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="day-group-header">
+        <div class="day-group-date">${day}</div>
+        <div class="day-group-summary">${units.toFixed(1)} units</div>
+      </div>
+      <div style="padding:0 16px;">${items}</div>`;
+  }).join('');
+}
+
+// ===================== RENDER STATS =====================
+function renderStats() {
+  const now = Date.now();
+  const weekStart = now - 7 * 86400000;
+  const monthStart = now - 30 * 86400000;
+
+  const weekDrinks = log.filter(d => d.timestamp >= weekStart);
+  const monthDrinks = log.filter(d => d.timestamp >= monthStart);
+
+  const weekUnits = weekDrinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0);
+  const monthUnits = monthDrinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0);
+  const avgDay = weekUnits / 7;
+
+  // Sober days in last 7
+  const soberDays = (() => {
+    let count = 0;
+    for (let i = 0; i < 7; i++) {
+      const dayStart = new Date(); dayStart.setHours(0,0,0,0);
+      dayStart.setDate(dayStart.getDate() - i);
+      const dayEnd = dayStart.getTime() + 86400000;
+      const hasDrink = log.some(d => d.timestamp >= dayStart.getTime() && d.timestamp < dayEnd);
+      if (!hasDrink) count++;
+    }
+    return count;
+  })();
+
+  document.getElementById('stat-week-total').textContent = weekUnits.toFixed(1);
+  document.getElementById('stat-month-total').textContent = monthUnits.toFixed(1);
+  document.getElementById('stat-avg-day').textContent = avgDay.toFixed(1);
+  document.getElementById('stat-sober-days').textContent = soberDays;
+
+  // Goal
+  const goal = parseFloat(settings.weeklyGoal);
+  const goalPct = Math.min(100, (weekUnits / goal) * 100);
+  document.getElementById('goal-used').textContent = weekUnits.toFixed(1);
+  document.getElementById('goal-limit-label').textContent = `of ${goal} units`;
+  document.getElementById('goal-bar').style.width = goalPct + '%';
+  document.getElementById('goal-bar').className = 'goal-bar-fill' + (goalPct >= 100 ? ' over' : '');
+  document.getElementById('goal-pct').textContent = Math.round(goalPct) + '% used';
+
+  drawBACChart();
+  drawWeekChart(weekDrinks);
+}
+
+function drawBACChart() {
+  const canvas = document.getElementById('bac-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 120;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  const todayDrinks = getTodayDrinks();
+  const points = [];
+  const now = Date.now();
+  const hoursBack = 12;
+
+  for (let i = 0; i <= 60; i++) {
+    const t = now - (hoursBack - (hoursBack * i / 60)) * 3600000;
+    const fakeDrinks = todayDrinks.map(d => ({...d}));
+    const bac = calcBACAtTime(fakeDrinks, t);
+    points.push(bac);
+  }
+
+  const maxBac = Math.max(...points, parseFloat(settings.legalLimit) * 1.2, 0.01);
+  const limit = parseFloat(settings.legalLimit);
+  const limitY = H - (limit / maxBac) * (H - 20) - 10;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = 10 + (H - 20) * i / 3;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Legal limit line
+  ctx.strokeStyle = 'rgba(251,191,36,0.4)';
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, limitY); ctx.lineTo(W, limitY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(124,106,247,0.4)');
+  grad.addColorStop(1, 'rgba(124,106,247,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  points.forEach((v, i) => {
+    const x = (i / 60) * W;
+    const y = H - (v / maxBac) * (H - 20) - 10;
+    if (i === 0) ctx.lineTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.lineTo(W, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(192,132,252,0.9)';
+  ctx.lineWidth = 2;
+  points.forEach((v, i) => {
+    const x = (i / 60) * W;
+    const y = H - (v / maxBac) * (H - 20) - 10;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+function calcBACAtTime(drinks, atTime) {
+  const r = settings.gender === 'female' ? 0.55 : 0.68;
+  const weightKg = settings.weightUnit === 'lb'
+    ? parseFloat(settings.weightKg) * 0.453592
+    : parseFloat(settings.weightKg);
+  let total = 0;
+  for (const d of drinks) {
+    if (d.timestamp > atTime) continue;
+    const hoursElapsed = (atTime - d.timestamp) / 3600000;
+    const alcoholGrams = (d.volumeMl * d.abv / 100) * 0.789;
+    const peakBAC = alcoholGrams / (weightKg * r * 10);
+    const metabolised = 0.15 * hoursElapsed;
+    total += Math.max(0, peakBAC - metabolised);
+  }
+  return Math.max(0, total);
+}
+
+function drawWeekChart(weekDrinks) {
+  const canvas = document.getElementById('week-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 120;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    const label = d.toLocaleDateString('en-GB', { weekday: 'short' });
+    const start = d.getTime();
+    const end = start + 86400000;
+    const u = weekDrinks.filter(dr => dr.timestamp >= start && dr.timestamp < end)
+      .reduce((s, dr) => s + calcUnits(dr.volumeMl, dr.abv), 0);
+    days.push({ label, units: u });
+  }
+
+  const maxU = Math.max(...days.map(d => d.units), 4);
+  const barW = (W - 20) / 7 - 6;
+  ctx.clearRect(0, 0, W, H);
+
+  days.forEach((day, i) => {
+    const x = 10 + i * ((W - 20) / 7);
+    const barH = (day.units / maxU) * (H - 28);
+    const y = H - barH - 18;
+    const isToday = i === 6;
+
+    const grad = ctx.createLinearGradient(0, y, 0, H - 18);
+    grad.addColorStop(0, isToday ? 'rgba(192,132,252,0.9)' : 'rgba(124,106,247,0.5)');
+    grad.addColorStop(1, isToday ? 'rgba(124,106,247,0.4)' : 'rgba(124,106,247,0.1)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x + 2, y, barW, barH, 4);
+    ctx.fill();
+
+    ctx.fillStyle = isToday ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)';
+    ctx.font = `${isToday ? 700 : 400} 9px Syne, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(day.label, x + barW / 2 + 2, H - 4);
+  });
+}
+
+// ===================== RENDER SETTINGS =====================
+function loadSettingsForm() {
+  document.getElementById('s-gender').value = settings.gender;
+  document.getElementById('s-weight').value = settings.weightKg;
+  document.getElementById('s-weight-unit').value = settings.weightUnit;
+  document.getElementById('s-bac-unit').value = settings.bacUnit;
+  document.getElementById('s-vol-unit').value = settings.volUnit;
+  document.getElementById('s-currency').value = settings.currency;
+  document.getElementById('s-weekly-goal').value = settings.weeklyGoal;
+  document.getElementById('s-legal-limit').value = settings.legalLimit;
+}
+
+function bindSettingsEvents() {
+  const ids = ['s-gender','s-weight','s-weight-unit','s-bac-unit','s-vol-unit','s-currency','s-weekly-goal','s-legal-limit'];
+  ids.forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      settings.gender = document.getElementById('s-gender').value;
+      settings.weightKg = parseFloat(document.getElementById('s-weight').value) || 75;
+      settings.weightUnit = document.getElementById('s-weight-unit').value;
+      settings.bacUnit = document.getElementById('s-bac-unit').value;
+      settings.volUnit = document.getElementById('s-vol-unit').value;
+      settings.currency = document.getElementById('s-currency').value;
+      settings.weeklyGoal = parseFloat(document.getElementById('s-weekly-goal').value) || 14;
+      settings.legalLimit = parseFloat(document.getElementById('s-legal-limit').value);
+      saveSettings();
+      renderToday();
+    });
+  });
+
+  document.getElementById('btn-export').addEventListener('click', exportCSV);
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    if (confirm('Delete all logged drinks? This cannot be undone.')) {
+      log = [];
+      saveLog();
+      renderToday();
+      renderLog();
+      renderStats();
+    }
+  });
+}
+
+function exportCSV() {
+  const rows = [['Date','Time','Name','Volume (ml)','ABV %','Units','Cost','BAC approx']];
+  for (const d of log) {
+    const dt = new Date(d.timestamp);
+    rows.push([
+      dt.toLocaleDateString('en-GB'),
+      dt.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }),
+      d.name, d.volumeMl, d.abv,
+      calcUnits(d.volumeMl, d.abv).toFixed(2),
+      d.cost || 0, ''
+    ]);
+  }
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'alcotrack-log.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===================== MODAL =====================
+function buildPresetGrid() {
+  const grid = document.getElementById('preset-grid');
+  grid.innerHTML = PRESETS.map((p, i) => `
+    <div class="preset-chip" data-i="${i}">
+      <div class="preset-chip-icon">${p.icon}</div>
+      <div class="preset-chip-name">${p.name}</div>
+    </div>`).join('');
+
+  grid.querySelectorAll('.preset-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      grid.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      const p = PRESETS[chip.dataset.i];
+      document.getElementById('f-name').value = p.name;
+      document.getElementById('f-volume').value = p.vol;
+      document.getElementById('f-abv').value = p.abv;
+      updateUnitsDisplay();
+    });
+  });
+}
+
+function updateUnitsDisplay() {
+  const vol = parseFloat(document.getElementById('f-volume').value) || 0;
+  const abv = parseFloat(document.getElementById('f-abv').value) || 0;
+  const u = calcUnits(vol, abv);
+  document.getElementById('f-units-display').value = u > 0 ? u.toFixed(2) + ' units' : '—';
+}
+
+function openModal() {
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-volume').value = '';
+  document.getElementById('f-abv').value = '';
+  document.getElementById('f-cost').value = '';
+  document.getElementById('f-units-display').value = '—';
+  document.getElementById('preset-grid').querySelectorAll('.preset-chip').forEach(c => c.classList.remove('selected'));
+  const now = new Date();
+  document.getElementById('f-time').value = now.toTimeString().slice(0,5);
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+
+function addDrink() {
+  const name = document.getElementById('f-name').value.trim() || 'Drink';
+  const vol = parseFloat(document.getElementById('f-volume').value);
+  const abv = parseFloat(document.getElementById('f-abv').value);
+  const cost = parseFloat(document.getElementById('f-cost').value) || 0;
+  const timeVal = document.getElementById('f-time').value;
+
+  if (!vol || !abv) { alert('Please enter volume and ABV.'); return; }
+
+  const now = new Date();
+  const [h, m] = timeVal.split(':').map(Number);
+  now.setHours(h, m, 0, 0);
+
+  const entry = {
+    id: Date.now().toString(),
+    timestamp: now.getTime(),
+    name, volumeMl: vol, abv, cost
+  };
+
+  log.push(entry);
+  saveLog();
+  closeModal();
+  renderToday();
+  if (currentPage === 'stats') renderStats();
+  if (currentPage === 'log') renderLog();
+}
+
+// ===================== NAVIGATION =====================
+let currentPage = 'today';
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.page;
+    currentPage = page;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+
+    if (page === 'log') renderLog();
+    if (page === 'stats') renderStats();
+    if (page === 'today') renderToday();
+
+    // Show/hide FAB
+    document.getElementById('fab').style.display = (page === 'today') ? 'flex' : 'none';
+  });
+});
+
+// ===================== INIT =====================
+buildPresetGrid();
+
+document.getElementById('fab').addEventListener('click', openModal);
+document.getElementById('btn-add-drink').addEventListener('click', addDrink);
+document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+document.getElementById('add-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('add-modal')) closeModal();
+});
+
+document.getElementById('f-volume').addEventListener('input', updateUnitsDisplay);
+document.getElementById('f-abv').addEventListener('input', updateUnitsDisplay);
+
+loadSettingsForm();
+bindSettingsEvents();
+renderToday();
+
+// Live BAC refresh
+setInterval(() => {
+  if (currentPage === 'today') renderToday();
+}, 60000);
+
+// ===================== PWA SERVICE WORKER =====================
+if ('serviceWorker' in navigator) {
+  const swCode = `
+const CACHE = 'alcotrack-v1';
+const SHELL = ['/'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/')))
+  );
+});`;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+</script>
+</body>
+</html>
