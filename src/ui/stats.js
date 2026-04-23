@@ -1,6 +1,8 @@
 import { getLog, getSettings } from '../storage.js'
 import { calcUnits } from '../bac.js'
-import { drawBACChart, drawWeekChart } from '../charts.js'
+import { drawDailyBACChart, drawWeeklyChart, drawMonthlyChart } from '../charts.js'
+
+let _activeChart = 'daily'
 
 export function renderStats() {
   const log = getLog()
@@ -36,8 +38,33 @@ export function renderStats() {
   document.getElementById('goal-bar').className = 'goal-bar-fill' + (goalPct >= 100 ? ' over' : '')
   document.getElementById('goal-pct').textContent = Math.round(goalPct) + '% used'
 
+  _bindChartTabs(log, settings)
+  _drawChart(log, settings)
+}
+
+function _bindChartTabs(log, settings) {
+  document.querySelectorAll('.chart-tab').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      _activeChart = btn.dataset.chart
+      _drawChart(log, settings)
+    }
+  })
+}
+
+function _drawChart(log, settings) {
+  const canvas = document.getElementById('main-chart')
+  if (!canvas || canvas.parentElement.clientWidth === 0) return
+
   const today = new Date(); today.setHours(0, 0, 0, 0)
-  const todayDrinks = log.filter(d => d.timestamp >= today.getTime())
-  drawBACChart(document.getElementById('bac-chart'), todayDrinks, settings)
-  drawWeekChart(document.getElementById('week-chart'), weekDrinks)
+
+  if (_activeChart === 'daily') {
+    const todayDrinks = log.filter(d => d.timestamp >= today.getTime())
+    drawDailyBACChart(canvas, todayDrinks, settings)
+  } else if (_activeChart === 'weekly') {
+    drawWeeklyChart(canvas, log)
+  } else {
+    drawMonthlyChart(canvas, log)
+  }
 }

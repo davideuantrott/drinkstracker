@@ -1,113 +1,362 @@
 import { calcBACAtTime, calcUnits } from './bac.js'
 
-export function drawBACChart(canvas, todayDrinks, settings) {
+// ── Now-tab live BAC chart ───────────────────────────────────────────────────
+
+export function drawNowBACChart(canvas, drinks, settings) {
   const ctx = canvas.getContext('2d')
-  const W = canvas.parentElement.clientWidth - 32
-  const H = 120
+  const W = canvas.parentElement.clientWidth
+  const H = 160
   canvas.width = W * devicePixelRatio
   canvas.height = H * devicePixelRatio
   canvas.style.width = W + 'px'
   canvas.style.height = H + 'px'
   ctx.scale(devicePixelRatio, devicePixelRatio)
 
-  const points = []
   const now = Date.now()
-  const hoursBack = 12
+  const limit = parseFloat(settings.legalLimit)
 
-  for (let i = 0; i <= 60; i++) {
-    const t = now - (hoursBack - (hoursBack * i / 60)) * 3600000
-    points.push(calcBACAtTime(todayDrinks, t, settings))
+  const firstTs = drinks.length
+    ? drinks.reduce((m, d) => Math.min(m, d.timestamp), Infinity)
+    : now
+  const currentBAC = calcBACAtTime(drinks, now, settings)
+  const soberMs = currentBAC > 0 ? now + (currentBAC / 0.15) * 3600000 : now
+
+  const tStart = Math.min(firstTs, now - 4 * 3600000)
+  const tEnd = Math.max(soberMs + 20 * 60000, now + 60 * 60000)
+
+  const N = 120
+  const pts = []
+  for (let i = 0; i <= N; i++) {
+    const t = tStart + (tEnd - tStart) * (i / N)
+    pts.push({ t, v: calcBACAtTime(drinks, t, settings) })
   }
 
+  const maxV = Math.max(...pts.map(p => p.v), limit * 1.3, 0.01)
+
+  const PL = 6, PR = 6, PT = 12, PB = 22
+  const cW = W - PL - PR
+  const cH = H - PT - PB
+
+  const toX = t => PL + ((t - tStart) / (tEnd - tStart)) * cW
+  const toY = v => PT + cH - (v / maxV) * cH
+
+  ctx.clearRect(0, 0, W, H)
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'
+  ctx.lineWidth = 1
+  for (let i = 0; i <= 4; i++) {
+    const y = PT + (cH * i) / 4
+    ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
+  }
+
+  // Legal limit line
+  const limitY = toY(limit)
+  ctx.save()
+  ctx.strokeStyle = 'rgba(251,191,36,0.55)'
+  ctx.setLineDash([5, 4])
+  ctx.lineWidth = 1
+  ctx.beginPath(); ctx.moveTo(PL, limitY); ctx.lineTo(W - PR, limitY); ctx.stroke()
+  ctx.restore()
+  ctx.fillStyle = 'rgba(251,191,36,0.75)'
+  ctx.font = '700 9px Poppins,sans-serif'
+  ctx.textAlign = 'left'
+  ctx.fillText('LIMIT', PL + 4, limitY - 3)
+
+  // Colored fill — vertical gradient keyed to BAC level
+  const limitFrac = Math.max(0, Math.min(1, 1 - limit / maxV))
+  const halfFrac  = Math.max(0, Math.min(1, 1 - (limit * 0.5) / maxV))
+  const grad = ctx.createLinearGradient(0, PT, 0, PT + cH)
+  grad.addColorStop(0,          'rgba(248,113,113,0.75)')
+  grad.addColorStop(limitFrac,  'rgba(251,191,36,0.65)')
+  grad.addColorStop(halfFrac,   'rgba(52,211,153,0.55)')
+  grad.addColorStop(1,          'rgba(52,211,153,0.08)')
+
+  ctx.beginPath()
+  ctx.moveTo(toX(pts[0].t), PT + cH)
+  pts.forEach(p => ctx.lineTo(toX(p.t), toY(p.v)))
+  ctx.lineTo(toX(pts[N].t), PT + cH)
+  ctx.closePath()
+  ctx.fillStyle = grad
+  ctx.fill()
+
+  // Curve
+  ctx.beginPath()
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)'
+  ctx.lineWidth = 1.5
+  pts.forEach((p, i) => {
+    i === 0 ? ctx.moveTo(toX(p.t), toY(p.v)) : ctx.lineTo(toX(p.t), toY(p.v))
+  })
+  ctx.stroke()
+
+  // Current-time marker
+  const nowX = toX(now)
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+  ctx.setLineDash([3, 3])
+  ctx.lineWidth = 1
+  ctx.beginPath(); ctx.moveTo(nowX, PT); ctx.lineTo(nowX, PT + cH); ctx.stroke()
+  ctx.restore()
+
+  // Sober-time annotation
+  if (currentBAC > 0) {
+    const soberX = toX(soberMs)
+    if (soberX > PL && soberX < W - PR) {
+      const soberStr = new Date(soberMs).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      ctx.fillStyle = 'rgba(52,211,153,0.9)'
+      ctx.font = '600 9px Poppins,sans-serif'
+      ctx.textAlign = soberX > W * 0.6 ? 'right' : 'left'
+      const offset = soberX > W * 0.6 ? -4 : 4
+      ctx.fillText('Sober ' + soberStr, soberX + offset, PT + cH - 4)
+    }
+  }
+
+  // X-axis time labels
+  ctx.fillStyle = 'rgba(168,192,232,0.65)'
+  ctx.font = '9px "Roboto Mono",monospace'
+  ctx.textAlign = 'center'
+  const totalHours = (tEnd - tStart) / 3600000
+  const step = totalHours <= 6 ? 1 : totalHours <= 12 ? 2 : 4
+  const anchor = new Date(tStart)
+  anchor.setMinutes(0, 0, 0)
+  anchor.setHours(anchor.getHours() + 1)
+  for (let t = anchor.getTime(); t <= tEnd; t += step * 3600000) {
+    const x = toX(t)
+    if (x < PL + 22 || x > W - PR - 22) continue
+    const d = new Date(t)
+    ctx.fillText(d.getHours().toString().padStart(2, '0') + ':00', x, H - 5)
+  }
+}
+
+// ── Stats DAILY: BAC trend today (used in stats tab) ────────────────────────
+
+export function drawDailyBACChart(canvas, todayDrinks, settings) {
+  const ctx = canvas.getContext('2d')
+  const W = canvas.parentElement.clientWidth
+  const H = 180
+  canvas.width = W * devicePixelRatio
+  canvas.height = H * devicePixelRatio
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
+  ctx.scale(devicePixelRatio, devicePixelRatio)
+
+  const now = Date.now()
   const limit = parseFloat(settings.legalLimit)
-  const maxBac = Math.max(...points, limit * 1.2, 0.01)
-  const limitY = H - (limit / maxBac) * (H - 20) - 10
+  const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0)
+  const tStart = dayStart.getTime()
+  const tEnd = now + 2 * 3600000
+
+  const N = 120
+  const pts = []
+  for (let i = 0; i <= N; i++) {
+    const t = tStart + (tEnd - tStart) * (i / N)
+    pts.push({ t, v: calcBACAtTime(todayDrinks, t, settings) })
+  }
+
+  const maxV = Math.max(...pts.map(p => p.v), limit * 1.3, 0.01)
+  const PL = 6, PR = 6, PT = 12, PB = 22
+  const cW = W - PL - PR, cH = H - PT - PB
+  const toX = t => PL + ((t - tStart) / (tEnd - tStart)) * cW
+  const toY = v => PT + cH - (v / maxV) * cH
 
   ctx.clearRect(0, 0, W, H)
 
   ctx.strokeStyle = 'rgba(255,255,255,0.05)'
   ctx.lineWidth = 1
-  for (let i = 0; i <= 3; i++) {
-    const y = 10 + (H - 20) * i / 3
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
+  for (let i = 0; i <= 4; i++) {
+    const y = PT + (cH * i) / 4
+    ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
   }
 
-  ctx.strokeStyle = 'rgba(251,191,36,0.4)'
-  ctx.setLineDash([4, 4])
+  const limitY = toY(limit)
+  ctx.save()
+  ctx.strokeStyle = 'rgba(251,191,36,0.55)'
+  ctx.setLineDash([5, 4])
   ctx.lineWidth = 1
-  ctx.beginPath(); ctx.moveTo(0, limitY); ctx.lineTo(W, limitY); ctx.stroke()
-  ctx.setLineDash([])
+  ctx.beginPath(); ctx.moveTo(PL, limitY); ctx.lineTo(W - PR, limitY); ctx.stroke()
+  ctx.restore()
+  ctx.fillStyle = 'rgba(251,191,36,0.75)'
+  ctx.font = '700 9px Poppins,sans-serif'
+  ctx.textAlign = 'left'
+  ctx.fillText('LIMIT', PL + 4, limitY - 3)
 
-  const grad = ctx.createLinearGradient(0, 0, 0, H)
-  grad.addColorStop(0, 'rgba(124,106,247,0.4)')
-  grad.addColorStop(1, 'rgba(124,106,247,0)')
+  const limitFrac = Math.max(0, Math.min(1, 1 - limit / maxV))
+  const halfFrac  = Math.max(0, Math.min(1, 1 - (limit * 0.5) / maxV))
+  const grad = ctx.createLinearGradient(0, PT, 0, PT + cH)
+  grad.addColorStop(0,         'rgba(248,113,113,0.75)')
+  grad.addColorStop(limitFrac, 'rgba(251,191,36,0.65)')
+  grad.addColorStop(halfFrac,  'rgba(52,211,153,0.55)')
+  grad.addColorStop(1,         'rgba(52,211,153,0.08)')
 
   ctx.beginPath()
-  ctx.moveTo(0, H)
-  points.forEach((v, i) => {
-    const x = (i / 60) * W
-    const y = H - (v / maxBac) * (H - 20) - 10
-    i === 0 ? ctx.lineTo(x, y) : ctx.lineTo(x, y)
-  })
-  ctx.lineTo(W, H)
+  ctx.moveTo(toX(pts[0].t), PT + cH)
+  pts.forEach(p => ctx.lineTo(toX(p.t), toY(p.v)))
+  ctx.lineTo(toX(pts[N].t), PT + cH)
   ctx.closePath()
   ctx.fillStyle = grad
   ctx.fill()
 
   ctx.beginPath()
-  ctx.strokeStyle = 'rgba(192,132,252,0.9)'
-  ctx.lineWidth = 2
-  points.forEach((v, i) => {
-    const x = (i / 60) * W
-    const y = H - (v / maxBac) * (H - 20) - 10
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)'
+  ctx.lineWidth = 1.5
+  pts.forEach((p, i) => {
+    i === 0 ? ctx.moveTo(toX(p.t), toY(p.v)) : ctx.lineTo(toX(p.t), toY(p.v))
   })
   ctx.stroke()
+
+  const nowX = toX(now)
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+  ctx.setLineDash([3, 3])
+  ctx.lineWidth = 1
+  ctx.beginPath(); ctx.moveTo(nowX, PT); ctx.lineTo(nowX, PT + cH); ctx.stroke()
+  ctx.restore()
+
+  ctx.fillStyle = 'rgba(168,192,232,0.65)'
+  ctx.font = '9px "Roboto Mono",monospace'
+  ctx.textAlign = 'center'
+  for (let h = 0; h <= 24; h += 3) {
+    const t = tStart + h * 3600000
+    if (t > tEnd) break
+    const x = toX(t)
+    if (x < PL + 18 || x > W - PR - 18) continue
+    ctx.fillText(h.toString().padStart(2, '0') + ':00', x, H - 5)
+  }
 }
 
-export function drawWeekChart(canvas, weekDrinks) {
+// ── Stats WEEKLY: 7-day bars + 7-day rolling avg ─────────────────────────────
+
+export function drawWeeklyChart(canvas, log) {
   const ctx = canvas.getContext('2d')
-  const W = canvas.parentElement.clientWidth - 32
-  const H = 120
+  const W = canvas.parentElement.clientWidth
+  const H = 180
   canvas.width = W * devicePixelRatio
   canvas.height = H * devicePixelRatio
   canvas.style.width = W + 'px'
   canvas.style.height = H + 'px'
   ctx.scale(devicePixelRatio, devicePixelRatio)
 
+  const days = _buildDays(log, 7)
+  _drawBarChart(ctx, W, H, days, 7, true)
+}
+
+// ── Stats MONTHLY: 30-day bars + 30-day rolling avg ──────────────────────────
+
+export function drawMonthlyChart(canvas, log) {
+  const ctx = canvas.getContext('2d')
+  const W = canvas.parentElement.clientWidth
+  const H = 180
+  canvas.width = W * devicePixelRatio
+  canvas.height = H * devicePixelRatio
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
+  ctx.scale(devicePixelRatio, devicePixelRatio)
+
+  const days = _buildDays(log, 30)
+  _drawBarChart(ctx, W, H, days, 30, false)
+}
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+function _buildDays(log, n) {
   const days = []
-  for (let i = 6; i >= 0; i--) {
+  for (let i = n - 1; i >= 0; i--) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i)
-    const label = d.toLocaleDateString('en-GB', { weekday: 'short' })
     const start = d.getTime()
     const end = start + 86400000
-    const u = weekDrinks
+    const units = log
       .filter(dr => dr.timestamp >= start && dr.timestamp < end)
       .reduce((s, dr) => s + calcUnits(dr.volumeMl, dr.abv), 0)
-    days.push({ label, units: u })
+    days.push({ date: d, units })
   }
+  return days
+}
+
+function _drawBarChart(ctx, W, H, days, n, showDayLabels) {
+  const PL = 4, PR = 4, PT = 12, PB = 22
+  const cW = W - PL - PR, cH = H - PT - PB
 
   const maxU = Math.max(...days.map(d => d.units), 4)
-  const barW = (W - 20) / 7 - 6
+  const barSlot = cW / n
+  const barW = Math.max(2, barSlot - (n > 14 ? 2 : 4))
+
   ctx.clearRect(0, 0, W, H)
 
-  days.forEach((day, i) => {
-    const x = 10 + i * ((W - 20) / 7)
-    const barH = (day.units / maxU) * (H - 28)
-    const y = H - barH - 18
-    const isToday = i === 6
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'
+  ctx.lineWidth = 1
+  for (let i = 0; i <= 4; i++) {
+    const y = PT + (cH * i) / 4
+    ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
+  }
 
-    const grad = ctx.createLinearGradient(0, y, 0, H - 18)
-    grad.addColorStop(0, isToday ? 'rgba(192,132,252,0.9)' : 'rgba(124,106,247,0.5)')
-    grad.addColorStop(1, isToday ? 'rgba(124,106,247,0.4)' : 'rgba(124,106,247,0.1)')
+  // Bars
+  days.forEach((day, i) => {
+    const isToday = i === days.length - 1
+    const x = PL + i * barSlot + (barSlot - barW) / 2
+    const barH = (day.units / maxU) * cH
+    const y = PT + cH - barH
+
+    const grad = ctx.createLinearGradient(0, y, 0, PT + cH)
+    if (isToday) {
+      grad.addColorStop(0, 'rgba(255,77,125,0.9)')
+      grad.addColorStop(1, 'rgba(255,144,64,0.4)')
+    } else {
+      grad.addColorStop(0, 'rgba(124,106,247,0.65)')
+      grad.addColorStop(1, 'rgba(124,106,247,0.1)')
+    }
     ctx.fillStyle = grad
     ctx.beginPath()
-    ctx.roundRect(x + 2, y, barW, barH, 4)
-    ctx.fill()
+    if (barH > 0) { ctx.roundRect(x, y, barW, barH, Math.min(3, barW / 2)); ctx.fill() }
 
-    ctx.fillStyle = isToday ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)'
-    ctx.font = `${isToday ? 700 : 400} 9px Syne, sans-serif`
-    ctx.textAlign = 'center'
-    ctx.fillText(day.label, x + barW / 2 + 2, H - 4)
+    // X-axis labels
+    if (showDayLabels) {
+      ctx.fillStyle = isToday ? 'rgba(255,255,255,0.8)' : 'rgba(168,192,232,0.5)'
+      ctx.font = `${isToday ? 700 : 400} 9px Poppins,sans-serif`
+      ctx.textAlign = 'center'
+      ctx.fillText(day.date.toLocaleDateString('en-GB', { weekday: 'short' }), x + barW / 2, H - 5)
+    } else if (n <= 31) {
+      // Show date labels every ~5 days
+      if (i % 5 === 0 || i === days.length - 1) {
+        ctx.fillStyle = isToday ? 'rgba(255,255,255,0.8)' : 'rgba(168,192,232,0.45)'
+        ctx.font = '9px "Roboto Mono",monospace'
+        ctx.textAlign = 'center'
+        ctx.fillText(day.date.getDate().toString(), x + barW / 2, H - 5)
+      }
+    }
   })
+
+  // Rolling average line
+  const avgWindow = n === 7 ? 7 : 30
+  const avgPts = days.map((_, i) => {
+    const slice = days.slice(Math.max(0, i - avgWindow + 1), i + 1)
+    return slice.reduce((s, d) => s + d.units, 0) / slice.length
+  })
+
+  ctx.beginPath()
+  ctx.strokeStyle = 'rgba(255,204,0,0.8)'
+  ctx.lineWidth = 1.5
+  avgPts.forEach((v, i) => {
+    const x = PL + i * barSlot + barSlot / 2
+    const y = PT + cH - (v / maxU) * cH
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+  })
+  ctx.stroke()
+
+  // Legend
+  ctx.fillStyle = 'rgba(255,204,0,0.8)'
+  ctx.fillRect(W - PR - 54, PT + 2, 10, 2)
+  ctx.font = '9px Poppins,sans-serif'
+  ctx.textAlign = 'left'
+  ctx.fillText(avgWindow + '-day avg', W - PR - 42, PT + 6)
+}
+
+// ── Legacy export (keeps old stats.js working during transition) ──────────────
+
+export function drawBACChart(canvas, todayDrinks, settings) {
+  drawDailyBACChart(canvas, todayDrinks, settings)
+}
+
+export function drawWeekChart(canvas, weekDrinks) {
+  drawWeeklyChart(canvas, weekDrinks)
 }

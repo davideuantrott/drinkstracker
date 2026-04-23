@@ -177,7 +177,6 @@ From `alcotrack-claude-code-handoff.md`:
 | BAC chart uses raw canvas | Works fine; could move to Chart.js for maintainability |
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
 | Calories are approximate | Label more clearly in UI |
-| Custom drinks not synced to cloud | `at-customs` is localStorage-only; could add a `user_customs` Supabase table if needed |
 
 ---
 

@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
 
 let _log = []
 let _settings = { ...DEFAULT_SETTINGS }
+let _customs = []
 let _syncStatus = 'synced'
 let _syncListeners = []
 
@@ -38,6 +39,7 @@ export function onSyncStatusChange(fn) {
 export async function initStorage() {
   _settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null') || { ...DEFAULT_SETTINGS }
   _log = JSON.parse(localStorage.getItem(LOG_KEY) || '[]')
+  _customs = JSON.parse(localStorage.getItem(CUSTOMS_KEY) || '[]')
   _migrateIds()
 }
 
@@ -64,23 +66,28 @@ export async function saveSettings(s) {
 export async function clearAllData() {
   _log = []
   _settings = { ...DEFAULT_SETTINGS }
+  _customs = []
   _persistLog()
   _persistSettings()
+  _persistCustoms()
   if (!isSupabaseEnabled || !supabase) return
   const session = await supabase.auth.getSession()
   const userId = session.data.session?.user?.id
   if (!userId) return
   await supabase.from('drink_log').delete().eq('user_id', userId)
   await supabase.from('user_settings').delete().eq('user_id', userId)
+  await supabase.from('user_customs').delete().eq('user_id', userId)
 }
 
 export function clearLocalCache() {
   _log = []
   _settings = { ...DEFAULT_SETTINGS }
+  _customs = []
   localStorage.removeItem(LOG_KEY)
   localStorage.removeItem(SETTINGS_KEY)
   localStorage.removeItem(QUEUE_KEY)
   localStorage.removeItem(MIGRATED_KEY)
+  localStorage.removeItem(CUSTOMS_KEY)
 }
 
 // ── Supabase pull (called after login) ─────────────────────────────────────
@@ -118,6 +125,26 @@ export async function pullFromSupabase() {
         legalLimit: settingsRow.legal_limit || _settings.legalLimit
       }
       _persistSettings()
+    }
+
+    // Merge custom drink presets
+    const { data: cloudCustomsRaw } = await supabase.from('user_customs').select('*')
+    if (cloudCustomsRaw) {
+      const cloudCustoms = cloudCustomsRaw.map(row => ({
+        id:   row.id,
+        name: row.name,
+        vol:  parseFloat(row.vol),
+        abv:  parseFloat(row.abv),
+        icon: row.icon || '🥤'
+      }))
+      const cloudCustomIds = new Set(cloudCustoms.map(c => c.id))
+      const localOnlyCustoms = _customs.filter(c => !cloudCustomIds.has(c.id))
+      _customs = [...cloudCustoms, ...localOnlyCustoms]
+      _persistCustoms()
+      // Push local-only customs up to cloud
+      for (const c of localOnlyCustoms) {
+        _syncCustom('upsert', c)
+      }
     }
 
     if (!drinks || drinks.length === 0) {
@@ -192,20 +219,22 @@ export function hasMigrated() {
 // ── Custom drinks ───────────────────────────────────────────────────────────
 
 export function getCustomDrinks() {
-  return JSON.parse(localStorage.getItem(CUSTOMS_KEY) || '[]')
+  return _customs
 }
 
 export function saveCustomDrink(drink) {
-  const customs = getCustomDrinks()
-  const exists = customs.some(c => c.name === drink.name && c.vol === drink.vol && c.abv === drink.abv)
+  const exists = _customs.some(c => c.name === drink.name && c.vol === drink.vol && c.abv === drink.abv)
   if (exists) return
-  customs.push({ ...drink, id: crypto.randomUUID() })
-  localStorage.setItem(CUSTOMS_KEY, JSON.stringify(customs))
+  const entry = { ...drink, id: crypto.randomUUID() }
+  _customs.push(entry)
+  _persistCustoms()
+  _syncCustom('upsert', entry)
 }
 
 export function deleteCustomDrink(id) {
-  const customs = getCustomDrinks().filter(c => c.id !== id)
-  localStorage.setItem(CUSTOMS_KEY, JSON.stringify(customs))
+  _customs = _customs.filter(c => c.id !== id)
+  _persistCustoms()
+  _syncCustom('delete', { id })
 }
 
 // ── Offline queue ───────────────────────────────────────────────────────────
@@ -251,6 +280,29 @@ function _persistLog() {
 
 function _persistSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(_settings))
+}
+
+function _persistCustoms() {
+  localStorage.setItem(CUSTOMS_KEY, JSON.stringify(_customs))
+}
+
+async function _syncCustom(action, custom) {
+  if (!isSupabaseEnabled || !supabase) return
+  try {
+    const session = await supabase.auth.getSession()
+    const userId = session.data.session?.user?.id
+    if (!userId) return
+    if (action === 'upsert') {
+      await supabase.from('user_customs').upsert({
+        id: custom.id, user_id: userId,
+        name: custom.name, vol: custom.vol, abv: custom.abv, icon: custom.icon || '🥤'
+      })
+    } else if (action === 'delete') {
+      await supabase.from('user_customs').delete().eq('id', custom.id)
+    }
+  } catch (err) {
+    console.error('Custom sync error:', err)
+  }
 }
 
 function _setSyncStatus(s) {

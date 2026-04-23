@@ -44,6 +44,10 @@
         <div class="bac-sober-time" id="bac-sober-time"></div>
       </div>
 
+      <div class="now-chart-wrap">
+        <canvas id="now-bac-chart"></canvas>
+      </div>
+
       <div class="stats-row">
         <div class="stat-cell">
           <div class="stat-value mono" id="today-units">0.0</div>
@@ -57,6 +61,11 @@
           <div class="stat-value mono" id="today-cal">0</div>
           <div class="stat-label">Cals ~</div>
         </div>
+      </div>
+
+      <div id="quick-add-section" style="display:none">
+        <div class="quick-add-label">Quick Add</div>
+        <div class="quick-add-row" id="quick-add-row"></div>
       </div>
 
       <div class="drink-log-section">
@@ -84,13 +93,13 @@
         <div class="page-title">Stats</div>
       </div>
       <div style="padding: 0 16px 16px;">
-        <div class="chart-wrap">
-          <div class="chart-title">BAC Today</div>
-          <canvas id="bac-chart"></canvas>
-        </div>
-        <div class="chart-wrap">
-          <div class="chart-title">Units This Week</div>
-          <canvas id="week-chart"></canvas>
+        <div class="chart-tabs-wrap">
+          <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="daily">DAILY</button>
+            <button class="chart-tab" data-chart="weekly">WEEKLY</button>
+            <button class="chart-tab" data-chart="monthly">MONTHLY</button>
+          </div>
+          <canvas id="main-chart"></canvas>
         </div>
         <div class="chart-wrap">
           <div class="chart-title">Weekly Goal</div>
