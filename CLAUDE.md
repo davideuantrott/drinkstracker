@@ -6,9 +6,14 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2 (in progress)
+## Current state — Build 2 (active)
 
-Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The build compiles cleanly** (`npm run build` — 55 modules, 16.5 kB JS, zero errors). However, **Supabase has not been set up yet** — the user needs to complete the setup steps below before the app is live.
+Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The build compiles cleanly** (`npm run build` — 55 modules, zero errors). Supabase has been configured and Google OAuth is set up. The app is ready to deploy to Vercel.
+
+Recent changes (Build 2.1):
+- **BAC formula fixed** — removed erroneous `× 10` from Widmark denominator in `src/bac.js`; values were 10× too small
+- **Custom drinks** — manually-entered drinks are auto-saved to `at-customs` localStorage key and appear in a "Saved" section in the add-drink modal; each can be deleted with ×
+- **Redesign** — new visual design based on `fitness-app-design-system.jsonc`: deep navy backgrounds, coral/pink→orange gradient accent, Poppins + Roboto Mono fonts
 
 ---
 
@@ -45,19 +50,25 @@ drinkstracker/
 
 ## Design system
 
+Source: `fitness-app-design-system.jsonc` in the repo root.
+
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#0d0d14` | App background |
-| `--surface` | `#14141f` | Cards |
-| `--surface2` | `#1c1c2e` | Inputs, chips |
-| `--accent` | `#7c6af7` | Primary purple |
-| `--accent2` | `#c084fc` | Highlights, values |
+| `--bg` | `#0D1B3E` | App background (deep navy) |
+| `--surface` | `#0F2044` | Cards |
+| `--surface2` | `#162B56` | Inputs, chips |
+| `--surface3` | `#1A3060` | Alternative surfaces |
+| `--accent` | `#FF4D7D` | Primary coral/pink |
+| `--accent-end` | `#FF9040` | Gradient end (amber-orange) |
+| `--accent2` | `#FFCC00` | Gold — secondary highlights |
 | `--green` | `#34d399` | Safe/sober |
 | `--amber` | `#fbbf24` | Caution |
 | `--red` | `#f87171` | Over limit / danger |
-| `--muted` | `#6b6b8a` | Labels, secondary text |
+| `--muted` | `#A8C0E8` | Labels, secondary text (periwinkle) |
 
-Fonts: `Syne` (UI/headings, 400–800) + `DM Mono` (numeric values, 300–500).
+Primary gradient: `linear-gradient(135deg, #FF4D7D, #FF9040)` — used on FAB, buttons, logo, BAC number.
+
+Fonts: `Poppins` (UI/headings, 400–800) + `Roboto Mono` (numeric values, 300–500).
 
 ---
 
@@ -104,6 +115,7 @@ Fonts: `Syne` (UI/headings, 400–800) + `DM Mono` (numeric values, 300–500).
 | `at-settings` | JSON settings object |
 | `at-sync-queue` | JSON array of pending sync ops |
 | `at-migrated` | `"true"` after first migration |
+| `at-customs` | JSON array of user-saved custom drink presets |
 
 **Supabase tables:** `drink_log` and `user_settings` — see `supabase/001_initial.sql` for full schema. Both have Row Level Security enforced; users can only see/write their own rows.
 
@@ -195,7 +207,7 @@ From `alcotrack-claude-code-handoff.md`:
 | BAC chart uses raw canvas | Works fine; could move to Chart.js for maintainability |
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
 | Calories are approximate | Label more clearly in UI |
-| Presets are hardcoded | Should be user-editable eventually |
+| Custom drinks not synced to cloud | `at-customs` is localStorage-only; could add a `user_customs` Supabase table if needed |
 
 ---
 
@@ -217,6 +229,9 @@ From `alcotrack-claude-code-handoff.md`:
 | `renderLog()` | `src/ui/log.js` | Re-render History tab |
 | `renderStats()` | `src/ui/stats.js` | Re-render Stats tab + redraw both charts |
 | `loadSettingsForm()` | `src/ui/settings.js` | Populate settings form from current state |
+| `getCustomDrinks()` | `src/storage.js` | Return array of user-saved custom drink presets |
+| `saveCustomDrink(drink)` | `src/storage.js` | Save a custom drink (deduplicates by name+vol+abv) |
+| `deleteCustomDrink(id)` | `src/storage.js` | Remove a custom drink by id |
 | `openModal()` | `src/ui/modal.js` | Open the add-drink bottom sheet |
 | `showAuthScreen()` | `src/ui/auth-screen.js` | Show auth overlay, hide app |
 | `hideAuthScreen()` | `src/ui/auth-screen.js` | Hide auth overlay, show app |

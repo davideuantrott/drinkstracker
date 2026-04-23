@@ -1,15 +1,17 @@
 :root {
-  --bg: #0d0d14;
-  --surface: #14141f;
-  --surface2: #1c1c2e;
-  --border: rgba(255,255,255,0.08);
-  --accent: #7c6af7;
-  --accent2: #c084fc;
+  --bg: #0D1B3E;
+  --surface: #0F2044;
+  --surface2: #162B56;
+  --surface3: #1A3060;
+  --border: rgba(255,255,255,0.1);
+  --accent: #FF4D7D;
+  --accent2: #FFCC00;
+  --accent-end: #FF9040;
   --green: #34d399;
   --amber: #fbbf24;
   --red: #f87171;
-  --text: #e8e8f0;
-  --muted: #6b6b8a;
+  --text: #FFFFFF;
+  --muted: #A8C0E8;
   --safe: env(safe-area-inset-bottom, 0px);
 }
 
@@ -19,7 +21,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Syne', sans-serif;
+  font-family: 'Poppins', sans-serif;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   user-select: none;
@@ -35,7 +37,7 @@ html, body {
 }
 .loading-logo {
   font-size: 28px; font-weight: 800; letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #a78bfa, #c084fc);
+  background: linear-gradient(135deg, #FF4D7D, #FF9040);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .loading-sub { font-size: 13px; color: var(--muted); }
@@ -55,7 +57,7 @@ html, body {
 .auth-logo-icon { font-size: 48px; margin-bottom: 12px; }
 .auth-logo-name {
   font-size: 32px; font-weight: 800; letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #a78bfa, #c084fc);
+  background: linear-gradient(135deg, #FF4D7D, #FF9040);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .auth-logo-sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
@@ -67,7 +69,7 @@ html, body {
   border: none; border-radius: 14px;
   padding: 16px;
   color: #1f1f1f;
-  font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+  font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 700;
   cursor: pointer; transition: opacity 0.15s;
   margin-bottom: 16px;
 }
@@ -94,8 +96,8 @@ html, body {
   font-size: 14px; color: var(--muted);
 }
 .auth-toggle-btn {
-  background: none; border: none; color: var(--accent2);
-  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  background: none; border: none; color: var(--accent);
+  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700;
   cursor: pointer; margin-left: 6px;
 }
 .auth-disclaimer {
@@ -152,7 +154,7 @@ html, body {
 #bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   height: calc(72px + var(--safe)); padding-bottom: var(--safe);
-  background: rgba(13,13,20,0.92);
+  background: rgba(13,27,62,0.95);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   display: flex; align-items: flex-start; padding-top: 8px; z-index: 100;
@@ -160,10 +162,10 @@ html, body {
 .nav-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: none; border: none; color: var(--muted);
-  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.05em; cursor: pointer; transition: color 0.2s; padding: 4px 0;
 }
-.nav-btn.active { color: var(--accent2); }
+.nav-btn.active { color: var(--accent); }
 .nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; }
 
 /* ---- PAGES ---- */
@@ -180,7 +182,7 @@ html, body {
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--muted); margin-bottom: 6px;
 }
-.mono { font-family: 'DM Mono', monospace; }
+.mono { font-family: 'Roboto Mono', monospace; }
 
 /* ---- PAGE HEADER ---- */
 .page-header {
@@ -191,14 +193,14 @@ html, body {
 
 /* ---- TODAY ---- */
 .bac-hero {
-  background: linear-gradient(135deg, #1a1433 0%, #0d0d14 100%);
+  background: linear-gradient(180deg, #0F2044 0%, #0D1B3E 100%);
   border-bottom: 1px solid var(--border);
   padding: 24px 20px 28px; text-align: center; position: relative; overflow: hidden;
 }
 .bac-hero::before {
   content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%);
   width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(124,106,247,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,77,125,0.15) 0%, transparent 70%);
   pointer-events: none;
 }
 .bac-label-top {
@@ -206,9 +208,9 @@ html, body {
   color: var(--muted); margin-bottom: 8px;
 }
 .bac-number {
-  font-family: 'DM Mono', monospace; font-size: 72px; font-weight: 300;
+  font-family: 'Roboto Mono', monospace; font-size: 72px; font-weight: 300;
   letter-spacing: -0.05em; line-height: 1;
-  background: linear-gradient(135deg, #a78bfa, #c084fc);
+  background: linear-gradient(135deg, #FF4D7D, #FF9040);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   transition: all 0.5s;
 }
@@ -231,7 +233,7 @@ html, body {
   font-weight: 700; letter-spacing: 0.08em; transform: translateX(-50%); white-space: nowrap;
 }
 .bac-status { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; margin-top: 12px; }
-.bac-sober-time { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: 'DM Mono', monospace; }
+.bac-sober-time { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: 'Roboto Mono', monospace; }
 
 /* ---- STATS ROW ---- */
 .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }
@@ -239,7 +241,7 @@ html, body {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 14px; padding: 14px 10px; text-align: center;
 }
-.stat-value { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 400; color: var(--accent2); }
+.stat-value { font-family: 'Roboto Mono', monospace; font-size: 24px; font-weight: 400; color: var(--accent); }
 .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 
 /* ---- DRINK LOG ---- */
@@ -256,8 +258,8 @@ html, body {
 }
 .drink-entry-info { flex: 1; min-width: 0; }
 .drink-entry-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drink-entry-meta { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
-.drink-entry-units { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent2); }
+.drink-entry-meta { font-size: 12px; color: var(--muted); font-family: 'Roboto Mono', monospace; margin-top: 2px; }
+.drink-entry-units { font-family: 'Roboto Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent); }
 .drink-entry-del { background: none; border: none; color: var(--red); opacity: 0.5; cursor: pointer; padding: 4px; margin-left: 4px; }
 .drink-entry-del:active { opacity: 1; }
 
@@ -268,13 +270,13 @@ html, body {
 #fab {
   position: fixed; bottom: calc(88px + var(--safe)); right: 20px;
   width: 56px; height: 56px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: linear-gradient(135deg, var(--accent), var(--accent-end));
   border: none; border-radius: 50%; color: white; font-size: 26px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 8px 24px rgba(124,106,247,0.5); z-index: 90;
+  box-shadow: 0 8px 24px rgba(255,77,125,0.4); z-index: 90;
   transition: transform 0.15s, box-shadow 0.15s;
 }
-#fab:active { transform: scale(0.92); box-shadow: 0 4px 12px rgba(124,106,247,0.4); }
+#fab:active { transform: scale(0.92); box-shadow: 0 4px 12px rgba(255,77,125,0.3); }
 
 /* ---- ADD DRINK MODAL ---- */
 .modal-overlay {
@@ -299,7 +301,7 @@ html, body {
 .form-input {
   width: 100%; background: var(--surface2); border: 1px solid var(--border);
   border-radius: 12px; padding: 14px 16px; color: var(--text);
-  font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600;
   outline: none; -webkit-appearance: none; appearance: none; transition: border-color 0.2s;
 }
 .form-input:focus { border-color: var(--accent); }
@@ -309,30 +311,39 @@ html, body {
 .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
 .preset-chip {
   background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.15s;
+  border-radius: 12px; padding: 10px 6px; text-align: center; cursor: pointer;
+  transition: all 0.15s; position: relative;
 }
-.preset-chip:active, .preset-chip.selected { background: rgba(124,106,247,0.2); border-color: var(--accent); }
+.preset-chip:active, .preset-chip.selected { background: rgba(255,77,125,0.15); border-color: var(--accent); }
 .preset-chip-icon { font-size: 22px; }
 .preset-chip-name { font-size: 11px; font-weight: 700; margin-top: 4px; color: var(--muted); }
-.preset-chip.selected .preset-chip-name { color: var(--accent2); }
+.preset-chip.selected .preset-chip-name { color: var(--accent); }
+
+.custom-chip-del {
+  position: absolute; top: 4px; right: 6px;
+  background: none; border: none; color: var(--muted);
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 2px;
+  opacity: 0.7; transition: opacity 0.15s, color 0.15s;
+}
+.custom-chip-del:active { opacity: 1; color: var(--red); }
 
 .btn-primary {
-  width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent2));
+  width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-end));
   border: none; border-radius: 14px; padding: 16px; color: white;
-  font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800;
+  font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 800;
   letter-spacing: 0.03em; cursor: pointer; transition: opacity 0.15s; margin-top: 8px;
 }
 .btn-primary:active, .btn-primary:disabled { opacity: 0.8; }
 .btn-ghost {
   width: 100%; background: none; border: 1px solid var(--border); border-radius: 14px;
-  padding: 14px; color: var(--muted); font-family: 'Syne', sans-serif;
+  padding: 14px; color: var(--muted); font-family: 'Poppins', sans-serif;
   font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
 }
 
 /* ---- LOG PAGE ---- */
 .day-group-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 16px 8px; }
 .day-group-date { font-size: 13px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
-.day-group-summary { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.day-group-summary { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--muted); }
 
 /* ---- STATS PAGE ---- */
 .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
@@ -343,7 +354,7 @@ html, body {
 .goal-bar-fill.over { background: var(--red); }
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-.stat-card-value { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 400; color: var(--accent2); }
+.stat-card-value { font-family: 'Roboto Mono', monospace; font-size: 28px; font-weight: 400; color: var(--accent); }
 .stat-card-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 
 /* ---- SETTINGS PAGE ---- */
@@ -361,13 +372,13 @@ html, body {
 .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .settings-select {
   background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 12px; color: var(--text); font-family: 'Syne', sans-serif;
+  padding: 8px 12px; color: var(--text); font-family: 'Poppins', sans-serif;
   font-size: 14px; font-weight: 600; outline: none;
   -webkit-appearance: none; appearance: none; min-width: 90px; text-align: right; cursor: pointer;
 }
 .settings-input {
   background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 8px 12px; color: var(--text); font-family: 'DM Mono', monospace;
+  padding: 8px 12px; color: var(--text); font-family: 'Roboto Mono', monospace;
   font-size: 16px; font-weight: 400; outline: none; width: 80px; text-align: right;
   -webkit-appearance: none; appearance: none;
 }

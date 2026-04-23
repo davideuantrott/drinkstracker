@@ -8,7 +8,7 @@ export function calcBACPermille(drinks, settings) {
   for (const d of drinks) {
     const hoursElapsed = (now - d.timestamp) / 3600000
     const alcoholGrams = (d.volumeMl * d.abv / 100) * 0.789
-    const peakBAC = alcoholGrams / (weightKg * r * 10)
+    const peakBAC = alcoholGrams / (weightKg * r)
     total += Math.max(0, peakBAC - 0.15 * hoursElapsed)
   }
   return Math.max(0, total)
@@ -24,7 +24,7 @@ export function calcBACAtTime(drinks, atTime, settings) {
     if (d.timestamp > atTime) continue
     const hoursElapsed = (atTime - d.timestamp) / 3600000
     const alcoholGrams = (d.volumeMl * d.abv / 100) * 0.789
-    const peakBAC = alcoholGrams / (weightKg * r * 10)
+    const peakBAC = alcoholGrams / (weightKg * r)
     total += Math.max(0, peakBAC - 0.15 * hoursElapsed)
   }
   return Math.max(0, total)

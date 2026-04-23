@@ -1,6 +1,8 @@
-import { addLogEntry } from '../storage.js'
+import { addLogEntry, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
 import { calcUnits } from '../bac.js'
 import { PRESETS } from '../presets.js'
+
+let _presetSelected = false
 
 export function buildPresetGrid() {
   const grid = document.getElementById('preset-grid')
@@ -12,8 +14,9 @@ export function buildPresetGrid() {
 
   grid.querySelectorAll('.preset-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      grid.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('selected'))
+      _clearSelections()
       chip.classList.add('selected')
+      _presetSelected = true
       const p = PRESETS[chip.dataset.i]
       document.getElementById('f-name').value = p.name
       document.getElementById('f-volume').value = p.vol
@@ -21,6 +24,57 @@ export function buildPresetGrid() {
       _updateUnitsDisplay()
     })
   })
+
+  _buildSavedGrid()
+}
+
+function _buildSavedGrid() {
+  const customs = getCustomDrinks()
+  const section = document.getElementById('saved-section')
+  const grid = document.getElementById('saved-grid')
+
+  if (customs.length === 0) {
+    section.style.display = 'none'
+    return
+  }
+
+  section.style.display = 'block'
+  grid.innerHTML = customs.map(c => `
+    <div class="preset-chip" data-custom-id="${c.id}">
+      <button class="custom-chip-del" data-del-id="${c.id}" aria-label="Remove">×</button>
+      <div class="preset-chip-icon">${c.icon || '🥤'}</div>
+      <div class="preset-chip-name">${c.name}</div>
+    </div>`).join('')
+
+  grid.querySelectorAll('.preset-chip').forEach(chip => {
+    chip.addEventListener('click', e => {
+      if (e.target.classList.contains('custom-chip-del')) return
+      _clearSelections()
+      chip.classList.add('selected')
+      _presetSelected = true
+      const id = chip.dataset.customId
+      const c = getCustomDrinks().find(x => x.id === id)
+      if (!c) return
+      document.getElementById('f-name').value = c.name
+      document.getElementById('f-volume').value = c.vol
+      document.getElementById('f-abv').value = c.abv
+      _updateUnitsDisplay()
+    })
+  })
+
+  grid.querySelectorAll('.custom-chip-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation()
+      deleteCustomDrink(btn.dataset.delId)
+      _buildSavedGrid()
+    })
+  })
+}
+
+function _clearSelections() {
+  document.querySelectorAll('#preset-grid .preset-chip, #saved-grid .preset-chip')
+    .forEach(c => c.classList.remove('selected'))
+  _presetSelected = false
 }
 
 export function bindModalEvents() {
@@ -35,15 +89,17 @@ export function bindModalEvents() {
 }
 
 export function openModal() {
+  _presetSelected = false
   document.getElementById('f-name').value = ''
   document.getElementById('f-volume').value = ''
   document.getElementById('f-abv').value = ''
   document.getElementById('f-cost').value = ''
   document.getElementById('f-units-display').value = '—'
-  document.getElementById('preset-grid').querySelectorAll('.preset-chip').forEach(c => c.classList.remove('selected'))
+  _clearSelections()
   const now = new Date()
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
+  _buildSavedGrid()
 }
 
 export function closeModal() {
@@ -91,6 +147,10 @@ async function _addDrink() {
     id:        crypto.randomUUID(),
     timestamp: now.getTime(),
     name, volumeMl: vol, abv, cost
+  }
+
+  if (!_presetSelected) {
+    saveCustomDrink({ name, vol, abv, icon: '🥤' })
   }
 
   await addLogEntry(entry)

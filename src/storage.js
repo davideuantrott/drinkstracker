@@ -4,6 +4,7 @@ const LOG_KEY = 'at-log'
 const SETTINGS_KEY = 'at-settings'
 const QUEUE_KEY = 'at-sync-queue'
 const MIGRATED_KEY = 'at-migrated'
+const CUSTOMS_KEY = 'at-customs'
 
 export const DEFAULT_SETTINGS = {
   gender: 'male',
@@ -186,6 +187,25 @@ export async function migrateLocalToCloud() {
 
 export function hasMigrated() {
   return localStorage.getItem(MIGRATED_KEY) === 'true'
+}
+
+// ── Custom drinks ───────────────────────────────────────────────────────────
+
+export function getCustomDrinks() {
+  return JSON.parse(localStorage.getItem(CUSTOMS_KEY) || '[]')
+}
+
+export function saveCustomDrink(drink) {
+  const customs = getCustomDrinks()
+  const exists = customs.some(c => c.name === drink.name && c.vol === drink.vol && c.abv === drink.abv)
+  if (exists) return
+  customs.push({ ...drink, id: crypto.randomUUID() })
+  localStorage.setItem(CUSTOMS_KEY, JSON.stringify(customs))
+}
+
+export function deleteCustomDrink(id) {
+  const customs = getCustomDrinks().filter(c => c.id !== id)
+  localStorage.setItem(CUSTOMS_KEY, JSON.stringify(customs))
 }
 
 // ── Offline queue ───────────────────────────────────────────────────────────

@@ -1,0 +1,515 @@
+// =============================================================================
+// FITNESS TRACKER APP - Design System (JSONC)
+// Source: Mobile dashboard mockup (Track / Activity / Challenge screens)
+// Use this file to replicate or adapt the visual language in any project.
+// =============================================================================
+
+{
+  "meta": {
+    "name": "Fitness Tracker App Design System",
+    "version": "1.0.0",
+    "sourceScreens": ["Track", "Activity", "Challenge"],
+    "theme": "dark",
+    "primaryUseCase": "mobile fitness / activity tracking dashboard"
+  },
+
+  // ---------------------------------------------------------------------------
+  // COLOUR PALETTE
+  // ---------------------------------------------------------------------------
+  "colors": {
+
+    // Backgrounds - deep navy blues, layered for depth
+    "background": {
+      "page": "#0D1B3E",           // outermost page / bleed background (rich cobalt blue)
+      "screen": "#0F2044",         // main screen / card background (slightly lighter)
+      "surface": "#162B56",        // elevated card / panel surface
+      "surfaceAlt": "#1A3060",     // alternative surface (e.g. timer pill, countdown pill)
+      "mapOverlay": "#0A1830"      // darkened map tile background
+    },
+
+    // Primary accent - coral / hot pink gradient family
+    "accent": {
+      "primary": "#FF4D7D",        // pure coral-pink (dominant accent)
+      "primaryLight": "#FF6B9D",   // lighter coral (hover / highlight states)
+      "primaryDark": "#E03060",    // deeper coral (pressed / active states)
+      "gradient": {
+        "start": "#FF4D7D",        // coral - used at gradient origin
+        "end": "#FF9040"           // amber-orange - used at gradient terminus
+      }
+    },
+
+    // Secondary accent - electric yellow / gold
+    "accentSecondary": {
+      "base": "#FFCC00",           // golden yellow (avatar badges, donut chart segments, icons)
+      "light": "#FFD740"           // lighter gold (hover)
+    },
+
+    // Progress / data colours
+    "data": {
+      "barChart":    "#FF6B5B",    // salmon-coral (bar chart bars, warm data)
+      "barChartAlt": "#FF9040",    // amber (alternate bar / gradient end)
+      "donutFill":   "#FF4D7D",    // donut / ring chart filled arc
+      "donutTrack":  "#1E3D6E",    // donut / ring chart unfilled track
+      "progressBar": {
+        "fill":  "#FF4D7D",        // progress bar fill (coral to gold gradient)
+        "track": "#1E3D6E"         // progress bar track / background
+      },
+      "mapRoute":    "#FF6B9D",    // route / path line on map (coral-pink)
+      "mapGrid":     "#1A3870"     // map grid lines (subtle blue)
+    },
+
+    // Text
+    "text": {
+      "primary":   "#FFFFFF",      // headings, key stats
+      "secondary": "#A8C0E8",      // labels, secondary info (muted periwinkle)
+      "muted":     "#6B8BBF",      // helper text, dimmed labels
+      "accent":    "#FF4D7D",      // timer digits, highlighted values (coral)
+      "onDark":    "#FFFFFF"       // text placed on dark backgrounds
+    },
+
+    // Icon / UI element colours
+    "ui": {
+      "iconActive":   "#FFCC00",   // active nav icon (gold)
+      "iconInactive": "#4A6FA5",   // inactive nav icon (muted blue)
+      "starBadge":    "#FF9040",   // star / rank icon (amber)
+      "locationPin":  "#FFCC00",   // map location pin (gold)
+      "heartRate":    "#FF4D7D",   // heart rate waveform (coral)
+      "lightning":    "#FFCC00"    // calories / lightning bolt icon (gold)
+    }
+
+  },
+
+  // ---------------------------------------------------------------------------
+  // GRADIENTS (reusable gradient definitions)
+  // ---------------------------------------------------------------------------
+  "gradients": {
+    "accentHorizontal": "linear-gradient(90deg, #FF4D7D 0%, #FF9040 100%)",
+    "accentVertical":   "linear-gradient(180deg, #FF4D7D 0%, #FF9040 100%)",
+    "accentDiagonal":   "linear-gradient(135deg, #FF4D7D 0%, #FF9040 100%)",
+    "barChart":         "linear-gradient(180deg, #FF6B5B 0%, #FF9040 100%)",
+    "progressBar":      "linear-gradient(90deg, #FF4D7D 0%, #FF9040 100%)",
+    "backgroundDeep":   "linear-gradient(180deg, #0D1B3E 0%, #0A1830 100%)"
+  },
+
+  // ---------------------------------------------------------------------------
+  // TYPOGRAPHY
+  // ---------------------------------------------------------------------------
+  "typography": {
+
+    // Font stack (sans-serif, clean, geometric - consistent with the mockup)
+    "fontFamily": {
+      "primary":   "'Poppins', 'Nunito Sans', 'DM Sans', sans-serif",   // headings & stats
+      "secondary": "'Poppins', 'Roboto', sans-serif",                   // body & labels
+      "mono":      "'Roboto Mono', 'Courier New', monospace"            // timer / countdown digits
+    },
+
+    // Scale
+    "fontSize": {
+      "xs":    "10px",   // micro labels (unit suffixes e.g. km, bpm)
+      "sm":    "12px",   // secondary labels, sub-labels
+      "base":  "14px",   // body text, card labels
+      "md":    "16px",   // section headings, card titles
+      "lg":    "20px",   // stat values (medium)
+      "xl":    "28px",   // large stat values (distance, total km)
+      "xxl":   "36px",   // hero timer digits
+      "xxxl":  "48px"    // extra large display values (if needed)
+    },
+
+    // Weight
+    "fontWeight": {
+      "regular":   400,
+      "medium":    500,
+      "semibold":  600,
+      "bold":      700,
+      "extrabold": 800
+    },
+
+    // Line height
+    "lineHeight": {
+      "tight":  1.1,
+      "normal": 1.4,
+      "relaxed": 1.6
+    },
+
+    // Letter spacing
+    "letterSpacing": {
+      "tight":  "-0.02em",
+      "normal": "0em",
+      "wide":   "0.05em",
+      "wider":  "0.1em"    // used in uppercase labels
+    }
+
+  },
+
+  // ---------------------------------------------------------------------------
+  // SPACING SCALE
+  // ---------------------------------------------------------------------------
+  "spacing": {
+    "0":   "0px",
+    "1":   "4px",
+    "2":   "8px",
+    "3":   "12px",
+    "4":   "16px",
+    "5":   "20px",
+    "6":   "24px",
+    "8":   "32px",
+    "10":  "40px",
+    "12":  "48px",
+    "16":  "64px"
+  },
+
+  // ---------------------------------------------------------------------------
+  // BORDER RADIUS
+  // ---------------------------------------------------------------------------
+  "borderRadius": {
+    "none":   "0px",
+    "sm":     "6px",    // small chips, badges
+    "md":     "12px",   // cards, panels
+    "lg":     "18px",   // screen containers, large cards
+    "xl":     "24px",   // pill containers (timer display)
+    "full":   "9999px"  // fully rounded pills / avatars
+  },
+
+  // ---------------------------------------------------------------------------
+  // SHADOWS & ELEVATION
+  // ---------------------------------------------------------------------------
+  "shadows": {
+    "none":    "none",
+    "sm":      "0 2px 8px rgba(0, 0, 0, 0.3)",
+    "md":      "0 4px 16px rgba(0, 0, 0, 0.4)",
+    "lg":      "0 8px 32px rgba(0, 0, 0, 0.5)",
+    "accent":  "0 4px 20px rgba(255, 77, 125, 0.35)",   // coral glow shadow
+    "timerPill": "inset 0 1px 3px rgba(0,0,0,0.4), 0 2px 12px rgba(0,0,0,0.5)"
+  },
+
+  // ---------------------------------------------------------------------------
+  // COMPONENT TOKENS
+  // ---------------------------------------------------------------------------
+  "components": {
+
+    // Screen / page wrapper
+    "screen": {
+      "backgroundColor": "$colors.background.screen",
+      "borderRadius":    "$borderRadius.lg",
+      "padding":         "$spacing.4",
+      "minWidth":        "320px",
+      "maxWidth":        "390px"
+    },
+
+    // Top navigation / screen title
+    "screenTitle": {
+      "fontSize":      "$typography.fontSize.md",
+      "fontWeight":    "$typography.fontWeight.semibold",
+      "color":         "$colors.text.primary",
+      "textAlign":     "center",
+      "letterSpacing": "$typography.letterSpacing.wide",
+      "marginBottom":  "$spacing.4"
+    },
+
+    // Stat card (Distance / Speed / Calories row)
+    "statCard": {
+      "layout":          "inline-flex column",
+      "gap":             "$spacing.1",
+      "label": {
+        "fontSize":      "$typography.fontSize.xs",
+        "fontWeight":    "$typography.fontWeight.regular",
+        "color":         "$colors.text.secondary",
+        "textTransform": "uppercase",
+        "letterSpacing": "$typography.letterSpacing.wider"
+      },
+      "value": {
+        "fontSize":   "$typography.fontSize.lg",
+        "fontWeight": "$typography.fontWeight.bold",
+        "color":      "$colors.accent.primary"   // coral for key values
+      },
+      "unit": {
+        "fontSize":   "$typography.fontSize.xs",
+        "fontWeight": "$typography.fontWeight.regular",
+        "color":      "$colors.text.secondary"
+      }
+    },
+
+    // Timer / countdown display pill
+    "timerDisplay": {
+      "backgroundColor": "$colors.background.surfaceAlt",
+      "borderRadius":    "$borderRadius.xl",
+      "padding":         "$spacing.3 $spacing.6",
+      "boxShadow":       "$shadows.timerPill",
+      "digits": {
+        "fontFamily":  "$typography.fontFamily.mono",
+        "fontSize":    "$typography.fontSize.xxl",
+        "fontWeight":  "$typography.fontWeight.bold",
+        "color":       "$colors.accent.primary",
+        "letterSpacing": "$typography.letterSpacing.wide"
+      },
+      "separator": {
+        "color":   "$colors.accent.primary",
+        "opacity": 0.6
+      }
+    },
+
+    // Donut / ring chart
+    "donutChart": {
+      "size":           "72px",
+      "strokeWidth":    "8px",
+      "trackColor":     "$colors.data.donutTrack",
+      "fillColor":      "$colors.accent.primary",
+      "labelInside": {
+        "fontSize":   "$typography.fontSize.sm",
+        "fontWeight": "$typography.fontWeight.bold",
+        "color":      "$colors.text.primary"
+      },
+      "monthLabel": {
+        "fontSize":   "$typography.fontSize.xs",
+        "color":      "$colors.text.secondary",
+        "marginTop":  "$spacing.1"
+      }
+    },
+
+    // Bar chart
+    "barChart": {
+      "barColor":      "$gradients.barChart",
+      "barBorderRadius": "$borderRadius.sm",
+      "gap":           "$spacing.1",
+      "maxBarHeight":  "80px",
+      "backgroundColor": "transparent"
+    },
+
+    // Progress bar (horizontal, used in Challenge screen)
+    "progressBar": {
+      "height":        "6px",
+      "borderRadius":  "$borderRadius.full",
+      "trackColor":    "$colors.data.progressBar.track",
+      "fillGradient":  "$gradients.progressBar",
+      "marginY":       "$spacing.2"
+    },
+
+    // Leaderboard / challenge row
+    "challengeRow": {
+      "layout":          "flex row align-center",
+      "gap":             "$spacing.3",
+      "paddingY":        "$spacing.3",
+      "borderBottom":    "1px solid rgba(255,255,255,0.05)",
+      "avatar": {
+        "size":           "44px",
+        "borderRadius":   "$borderRadius.full",
+        "backgroundColor": "$colors.accentSecondary.base"
+      },
+      "name": {
+        "fontSize":   "$typography.fontSize.base",
+        "fontWeight": "$typography.fontWeight.semibold",
+        "color":      "$colors.text.primary"
+      },
+      "metaLabel": {
+        "fontSize": "$typography.fontSize.xs",
+        "color":    "$colors.text.secondary"
+      },
+      "metaValue": {
+        "fontSize":   "$typography.fontSize.xs",
+        "fontWeight": "$typography.fontWeight.bold",
+        "color":      "$colors.text.primary"
+      },
+      "kmToGo": {
+        "fontSize": "$typography.fontSize.xs",
+        "color":    "$colors.text.muted"
+      },
+      "starIcon": {
+        "color": "$colors.ui.starBadge",
+        "size":  "18px"
+      }
+    },
+
+    // Map / route display area
+    "mapView": {
+      "backgroundColor":  "$colors.background.mapOverlay",
+      "borderRadius":     "$borderRadius.lg",
+      "routeLineColor":   "$colors.data.mapRoute",
+      "routeLineWidth":   "3px",
+      "gridLineColor":    "$colors.data.mapGrid",
+      "locationPinColor": "$colors.ui.locationPin"
+    },
+
+    // Bottom navigation bar
+    "bottomNav": {
+      "backgroundColor": "$colors.background.surface",
+      "height":          "56px",
+      "borderRadius":    "$borderRadius.full",
+      "padding":         "$spacing.2 $spacing.5",
+      "iconActive": {
+        "color": "$colors.ui.iconActive",
+        "size":  "24px"
+      },
+      "iconInactive": {
+        "color":   "$colors.ui.iconInactive",
+        "size":    "22px",
+        "opacity": 0.6
+      }
+    },
+
+    // Section label (e.g. "This Month", "speed average", "total distance")
+    "sectionLabel": {
+      "fontSize":      "$typography.fontSize.sm",
+      "fontWeight":    "$typography.fontWeight.regular",
+      "color":         "$colors.text.secondary",
+      "textTransform": "lowercase",
+      "letterSpacing": "$typography.letterSpacing.normal",
+      "marginBottom":  "$spacing.1"
+    },
+
+    // Hero metric (large KM or distance figure)
+    "heroMetric": {
+      "fontSize":   "$typography.fontSize.xl",
+      "fontWeight": "$typography.fontWeight.extrabold",
+      "color":      "$colors.text.primary",
+      "unit": {
+        "fontSize":   "$typography.fontSize.base",
+        "fontWeight": "$typography.fontWeight.regular",
+        "color":      "$colors.text.secondary",
+        "marginLeft": "$spacing.1"
+      }
+    }
+
+  },
+
+  // ---------------------------------------------------------------------------
+  // LAYOUT PATTERNS
+  // ---------------------------------------------------------------------------
+  "layout": {
+    "screenPadding":       "16px",
+    "cardGap":             "12px",
+    "sectionGap":          "20px",
+    "statRowColumns":      3,         // Distance / Speed / Calories split into 3 equal columns
+    "donutRowColumns":     3,         // Monthly donut charts: 3 per row
+    "challengeRowLayout":  "avatar + info + progress + meta",
+    "navIconCount":        3          // Pause / Stats / Trophy
+  },
+
+  // ---------------------------------------------------------------------------
+  // MOTION & ANIMATION
+  // ---------------------------------------------------------------------------
+  "animation": {
+    "durationFast":    "150ms",
+    "durationBase":    "250ms",
+    "durationSlow":    "400ms",
+    "easingDefault":   "cubic-bezier(0.4, 0, 0.2, 1)",
+    "easingBounce":    "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    "donutSpinIn":     "stroke-dashoffset 600ms cubic-bezier(0.4, 0, 0.2, 1)",
+    "barGrowUp":       "scaleY 400ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+    "progressSlideIn": "width 500ms cubic-bezier(0.4, 0, 0.2, 1)",
+    "timerPulse":      "opacity 1s ease-in-out infinite alternate"
+  },
+
+  // ---------------------------------------------------------------------------
+  // SCREEN DEFINITIONS (per-screen token overrides and structure)
+  // ---------------------------------------------------------------------------
+  "screens": {
+
+    "track": {
+      "title": "Track",
+      "sections": [
+        { "id": "mapView",    "component": "mapView",     "flex": 1 },
+        { "id": "timerLabel", "component": "sectionLabel", "content": "Time" },
+        { "id": "timer",      "component": "timerDisplay", "format": "HH:MM:SS" },
+        {
+          "id": "statsRow",
+          "layout": "3-column",
+          "stats": [
+            { "label": "Distance", "unit": "km",   "valueColor": "$colors.accent.primary" },
+            { "label": "Speed",    "unit": "m/min","valueColor": "$colors.accent.primary" },
+            { "label": "Calories", "unit": "ckal", "valueColor": "$colors.accent.primary" }
+          ]
+        },
+        { "id": "bottomNav", "component": "bottomNav" }
+      ]
+    },
+
+    "activity": {
+      "title": "Activity",
+      "sections": [
+        {
+          "id": "monthlyHero",
+          "component": "heroMetric",
+          "label": "This Month",
+          "unit": "km"
+        },
+        {
+          "id": "donutRow",
+          "layout": "3-column",
+          "charts": [
+            { "month": "Aug", "percent": 65 },
+            { "month": "Sep", "percent": 90 },
+            { "month": "Oct", "percent": 45 }
+          ]
+        },
+        {
+          "id": "totalsPanel",
+          "layout": "2-column",
+          "items": [
+            { "label": "total distance", "icon": "runner", "unit": "km" },
+            {
+              "subItems": [
+                { "label": "heart rate", "icon": "heartWave", "unit": "bpm" },
+                { "label": "calories",   "icon": "lightning",  "unit": "kal" }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "speedChart",
+          "component": "barChart",
+          "label": "speed average"
+        },
+        { "id": "bottomNav", "component": "bottomNav" }
+      ]
+    },
+
+    "challenge": {
+      "title": "Challenge",
+      "sections": [
+        {
+          "id": "leaderboard",
+          "layout": "list",
+          "entries": [
+            {
+              "rank": 1,
+              "name": "you",
+              "distance": 27,
+              "speed": 50,
+              "kmToGo": 17,
+              "progressPercent": 60,
+              "isSelf": true
+            },
+            {
+              "rank": 2,
+              "name": "john smith",
+              "distance": 29,
+              "speed": 60,
+              "kmToGo": 13,
+              "progressPercent": 75,
+              "isSelf": false,
+              "badge": "star"
+            },
+            {
+              "rank": 3,
+              "name": "william doe",
+              "distance": 17,
+              "speed": 30,
+              "kmToGo": 21,
+              "progressPercent": 40,
+              "isSelf": false
+            }
+          ]
+        },
+        {
+          "id": "raceCountdown",
+          "label": "remind me until next race",
+          "component": "timerDisplay",
+          "format": "HH:MM:SS"
+        },
+        { "id": "bottomNav", "component": "bottomNav" }
+      ]
+    }
+
+  }
+
+}
