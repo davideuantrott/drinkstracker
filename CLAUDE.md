@@ -6,11 +6,18 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2 (active)
+## Current state — Build 2.1 (live)
 
-Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The build compiles cleanly** (`npm run build` — 55 modules, zero errors). Supabase has been configured and Google OAuth is set up. The app is ready to deploy to Vercel.
+Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
-Recent changes (Build 2.1):
+Infrastructure:
+- **Supabase** — project created, DB migrated, Google OAuth enabled
+- **Vercel** — deployed and connected to this GitHub repo (auto-deploys on push to main); `VITE_SUPABASE_*` env vars set in Vercel project settings
+- **Google OAuth** — OAuth 2.0 client configured; Vercel URL added to authorised redirect URIs; Supabase Site URL updated to Vercel deployment URL
+
+Build compiles cleanly (`npm run build` — 55 modules, zero errors).
+
+Changes made in Build 2.1:
 - **BAC formula fixed** — removed erroneous `× 10` from Widmark denominator in `src/bac.js`; values were 10× too small
 - **Custom drinks** — manually-entered drinks are auto-saved to `at-customs` localStorage key and appear in a "Saved" section in the add-drink modal; each can be deleted with ×
 - **Redesign** — new visual design based on `fitness-app-design-system.jsonc`: deep navy backgrounds, coral/pink→orange gradient accent, Poppins + Roboto Mono fonts
@@ -121,52 +128,15 @@ Fonts: `Poppins` (UI/headings, 400–800) + `Roboto Mono` (numeric values, 300�
 
 ---
 
-## Setup required before the app is live
+## Local development setup
 
-The code is complete and builds. These are one-time infrastructure steps the user needs to do:
-
-### 1. Create a Supabase project
-- Go to [supabase.com](https://supabase.com) → New Project
-- Choose a name (e.g. `alcotrack`), set a DB password, pick a nearby region
-- Wait ~1 minute for provisioning
-
-### 2. Run the database migration
-- Supabase dashboard → **SQL Editor → New query**
-- Paste the full contents of `supabase/001_initial.sql`
-- Click **Run**
-
-### 3. Enable Google OAuth (optional but recommended)
-**In Supabase:**
-- Authentication → Providers → Google → Enable
-
-**In Google Cloud Console** ([console.cloud.google.com](https://console.cloud.google.com)):
-- APIs & Services → Credentials → Create OAuth 2.0 Client ID → Web application
-- Add to **Authorised redirect URIs**:
-  - `http://localhost:5173`
-  - `https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback`
-- Copy Client ID + Secret back into Supabase's Google provider settings
-
-### 4. Create `.env` file
 ```bash
-cp .env.example .env
+cp .env.example .env   # fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+npm install
+npm run dev            # http://localhost:5173
 ```
-Fill in values from Supabase → Project Settings → API:
-```
-VITE_SUPABASE_URL=https://abcdefghijk.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGci...
-```
+
 `.env` is gitignored — never commit it.
-
-### 5. Run locally
-```bash
-npm install      # if on a new machine
-npm run dev      # opens http://localhost:5173
-```
-
-### 6. Deploy to Vercel
-- Push repo to GitHub (already done), connect in Vercel
-- Vercel → Project Settings → Environment Variables: add the two `VITE_SUPABASE_*` vars
-- Also add the Vercel deployment URL to Supabase → Authentication → URL Configuration → Site URL, and add it to Google OAuth's authorised redirect URIs
 
 ---
 
