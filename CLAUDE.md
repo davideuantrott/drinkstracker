@@ -6,12 +6,12 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.1 (live)
+## Current state — Build 2.2 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
 Infrastructure:
-- **Supabase** — project created, DB migrated, Google OAuth enabled
+- **Supabase** — project created, DB migrated, Google OAuth enabled; three tables: `drink_log`, `user_settings`, `user_customs`
 - **Vercel** — deployed and connected to this GitHub repo (auto-deploys on push to main); `VITE_SUPABASE_*` env vars set in Vercel project settings
 - **Google OAuth** — OAuth 2.0 client configured; Vercel URL added to authorised redirect URIs; Supabase Site URL updated to Vercel deployment URL
 
@@ -21,6 +21,12 @@ Changes made in Build 2.1:
 - **BAC formula fixed** — removed erroneous `× 10` from Widmark denominator in `src/bac.js`; values were 10× too small
 - **Custom drinks** — manually-entered drinks are auto-saved to `at-customs` localStorage key and appear in a "Saved" section in the add-drink modal; each can be deleted with ×
 - **Redesign** — new visual design based on `fitness-app-design-system.jsonc`: deep navy backgrounds, coral/pink→orange gradient accent, Poppins + Roboto Mono fonts
+
+Changes made in Build 2.2:
+- **Custom drink sync** — `user_customs` Supabase table added (`supabase/002_user_customs.sql`); `saveCustomDrink`/`deleteCustomDrink` push immediately; `pullFromSupabase` merges cloud customs on login so saved drinks appear on all devices
+- **Live BAC chart on Now tab** — canvas chart below the BAC hero; colored gradient fill (green→amber→red keyed to legal limit), dashed limit line, vertical current-time marker, sober-time annotation; redraws every 60s via existing ticker
+- **Quick-add chips on Now tab** — last 3 unique drink types from log history shown as chips; tap to add instantly at current time; hidden when log is empty
+- **Enhanced Stats charts** — DAILY/WEEKLY/MONTHLY tab switcher replaces the two fixed chart cards; Daily shows BAC trend for today; Weekly shows 7-day bars + yellow 7-day rolling average line; Monthly shows 30-day bars + 30-day rolling average line
 
 ---
 
@@ -35,19 +41,20 @@ drinkstracker/
 ├── alcotracker.html        ← Build 1 backup (do not touch)
 ├── alcotrack-claude-code-handoff.md  ← original feature spec / handoff doc
 ├── supabase/
-│   └── 001_initial.sql     ← paste into Supabase SQL Editor to create tables
+│   ├── 001_initial.sql     ← drink_log + user_settings tables + RLS
+│   └── 002_user_customs.sql ← user_customs table + RLS (run after 001)
 └── src/
     ├── main.js             ← entry point; boots app, handles auth state
     ├── style.css           ← all CSS (design tokens, layout, every component)
     ├── bac.js              ← pure BAC calculation functions (Widmark formula)
     ├── auth.js             ← Supabase client + auth helpers
     ├── storage.js          ← state manager: localStorage + Supabase sync layer
-    ├── charts.js           ← canvas chart drawing (BAC over time, weekly bars)
+    ├── charts.js           ← canvas charts: now BAC, daily BAC, weekly/monthly bars
     ├── presets.js          ← PRESETS array + getPresetIcon() helper
     └── ui/
-        ├── today.js        ← renders Now tab (BAC hero, drink log, delete)
+        ├── today.js        ← renders Now tab (BAC hero, live chart, quick-add, drink log)
         ├── log.js          ← renders History tab (grouped by day)
-        ├── stats.js        ← renders Stats tab + triggers chart redraws
+        ├── stats.js        ← renders Stats tab (DAILY/WEEKLY/MONTHLY chart tabs)
         ├── settings.js     ← renders Profile tab, binds all settings inputs
         ├── modal.js        ← add-drink modal + migration modal logic
         └── auth-screen.js  ← auth UI (Google OAuth + email/password)
@@ -124,7 +131,7 @@ Fonts: `Poppins` (UI/headings, 400–800) + `Roboto Mono` (numeric values, 300�
 | `at-migrated` | `"true"` after first migration |
 | `at-customs` | JSON array of user-saved custom drink presets |
 
-**Supabase tables:** `drink_log` and `user_settings` — see `supabase/001_initial.sql` for full schema. Both have Row Level Security enforced; users can only see/write their own rows.
+**Supabase tables:** `drink_log`, `user_settings`, and `user_customs` — see `supabase/001_initial.sql` and `supabase/002_user_customs.sql`. All three have Row Level Security enforced; users can only see/write their own rows.
 
 ---
 
@@ -194,9 +201,13 @@ From `alcotrack-claude-code-handoff.md`:
 | `pullFromSupabase()` | `src/storage.js` | Fetch cloud data on login, merge with local |
 | `migrateLocalToCloud()` | `src/storage.js` | Push all local entries to Supabase (first-login migration) |
 | `processQueue()` | `src/storage.js` | Flush pending offline sync operations |
-| `renderToday()` | `src/ui/today.js` | Re-render Now tab (BAC, stats row, drink list) |
+| `renderToday()` | `src/ui/today.js` | Re-render Now tab (BAC, live chart, quick-add, drink list) |
+| `drawNowBACChart(canvas, drinks, settings)` | `src/charts.js` | Live BAC chart for Now tab (colored gradient, sober annotation) |
+| `drawDailyBACChart(canvas, drinks, settings)` | `src/charts.js` | BAC trend chart for Stats DAILY tab |
+| `drawWeeklyChart(canvas, log)` | `src/charts.js` | 7-day bar chart + rolling avg for Stats WEEKLY tab |
+| `drawMonthlyChart(canvas, log)` | `src/charts.js` | 30-day bar chart + rolling avg for Stats MONTHLY tab |
 | `renderLog()` | `src/ui/log.js` | Re-render History tab |
-| `renderStats()` | `src/ui/stats.js` | Re-render Stats tab + redraw both charts |
+| `renderStats()` | `src/ui/stats.js` | Re-render Stats tab + redraw active chart tab |
 | `loadSettingsForm()` | `src/ui/settings.js` | Populate settings form from current state |
 | `getCustomDrinks()` | `src/storage.js` | Return array of user-saved custom drink presets |
 | `saveCustomDrink(drink)` | `src/storage.js` | Save a custom drink (deduplicates by name+vol+abv) |
