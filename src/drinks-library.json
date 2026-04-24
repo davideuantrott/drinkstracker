@@ -1,0 +1,765 @@
+[
+  {
+    "name": "Stella Artois",
+    "volumeMl": 440,
+    "abv": 4.6,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Stella Artois",
+    "volumeMl": 330,
+    "abv": 4.6,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Heineken",
+    "volumeMl": 440,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Heineken",
+    "volumeMl": 330,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Foster's",
+    "volumeMl": 440,
+    "abv": 4,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Carling",
+    "volumeMl": 440,
+    "abv": 4,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Carlsberg",
+    "volumeMl": 440,
+    "abv": 3.8,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Peroni Nastro Azzurro",
+    "volumeMl": 330,
+    "abv": 5.1,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Peroni Nastro Azzurro",
+    "volumeMl": 660,
+    "abv": 5.1,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Corona Extra",
+    "volumeMl": 330,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Budweiser",
+    "volumeMl": 330,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Budweiser",
+    "volumeMl": 440,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Kronenbourg 1664",
+    "volumeMl": 330,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "San Miguel",
+    "volumeMl": 330,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Birra Moretti",
+    "volumeMl": 330,
+    "abv": 4.6,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Birra Moretti",
+    "volumeMl": 660,
+    "abv": 4.6,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Estrella Damm",
+    "volumeMl": 330,
+    "abv": 5.4,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Leffe Blonde",
+    "volumeMl": 330,
+    "abv": 6.6,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Amstel",
+    "volumeMl": 330,
+    "abv": 4.1,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Cobra",
+    "volumeMl": 330,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Cobra",
+    "volumeMl": 660,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Kingfisher Premium",
+    "volumeMl": 330,
+    "abv": 4.8,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Tiger",
+    "volumeMl": 330,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Staropramen",
+    "volumeMl": 330,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Desperados",
+    "volumeMl": 330,
+    "abv": 5.9,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Tennent's Lager",
+    "volumeMl": 440,
+    "abv": 4,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Tennent's Super",
+    "volumeMl": 500,
+    "abv": 9,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Coors Light",
+    "volumeMl": 330,
+    "abv": 4.2,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Camden Hells Lager",
+    "volumeMl": 330,
+    "abv": 4.6,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "BrewDog Lost Lager",
+    "volumeMl": 330,
+    "abv": 4.7,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Efes Pilsener",
+    "volumeMl": 330,
+    "abv": 5,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Asahi Super Dry",
+    "volumeMl": 330,
+    "abv": 5.2,
+    "category": "lager",
+    "ean": null
+  },
+  {
+    "name": "Fuller's London Pride",
+    "volumeMl": 500,
+    "abv": 4.1,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Old Speckled Hen",
+    "volumeMl": 500,
+    "abv": 5,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Sharp's Doom Bar",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "BrewDog Punk IPA",
+    "volumeMl": 330,
+    "abv": 5.6,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "BrewDog Elvis Juice",
+    "volumeMl": 330,
+    "abv": 6.5,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Wychwood Hobgoblin Gold",
+    "volumeMl": 500,
+    "abv": 4.5,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Wychwood Hobgoblin Ruby",
+    "volumeMl": 500,
+    "abv": 5.2,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Newcastle Brown Ale",
+    "volumeMl": 500,
+    "abv": 4.7,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Boddingtons Pub Ale",
+    "volumeMl": 440,
+    "abv": 3.8,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "John Smith's Extra Smooth",
+    "volumeMl": 440,
+    "abv": 3.6,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Camden Pale Ale",
+    "volumeMl": 330,
+    "abv": 4,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Innis & Gunn Original",
+    "volumeMl": 330,
+    "abv": 6.6,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Beavertown Gamma Ray APA",
+    "volumeMl": 330,
+    "abv": 5.4,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Beavertown Neck Oil Session IPA",
+    "volumeMl": 330,
+    "abv": 4.3,
+    "category": "ale",
+    "ean": null
+  },
+  {
+    "name": "Guinness Draught",
+    "volumeMl": 440,
+    "abv": 4.1,
+    "category": "stout",
+    "ean": null
+  },
+  {
+    "name": "Guinness Draught",
+    "volumeMl": 330,
+    "abv": 4.2,
+    "category": "stout",
+    "ean": null
+  },
+  {
+    "name": "Guinness Extra Stout",
+    "volumeMl": 500,
+    "abv": 4.2,
+    "category": "stout",
+    "ean": null
+  },
+  {
+    "name": "Guinness Foreign Extra Stout",
+    "volumeMl": 500,
+    "abv": 7.5,
+    "category": "stout",
+    "ean": null
+  },
+  {
+    "name": "Strongbow Original",
+    "volumeMl": 440,
+    "abv": 5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Strongbow Dark Fruits",
+    "volumeMl": 440,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Strongbow Rosé",
+    "volumeMl": 440,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Magners Original",
+    "volumeMl": 568,
+    "abv": 4.5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Magners Original",
+    "volumeMl": 330,
+    "abv": 4.5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Rekorderlig Strawberry-Lime",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Rekorderlig Wild Berries",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Kopparberg Strawberry & Lime",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Kopparberg Mixed Fruit",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Thatchers Gold",
+    "volumeMl": 500,
+    "abv": 4.8,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Aspall Suffolk Cyder",
+    "volumeMl": 330,
+    "abv": 5.5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Bulmers Original",
+    "volumeMl": 568,
+    "abv": 4.5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Old Mout Berries & Cherries",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Somersby Apple",
+    "volumeMl": 500,
+    "abv": 4.5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "Inch's Cider",
+    "volumeMl": 440,
+    "abv": 4.5,
+    "category": "cider",
+    "ean": null
+  },
+  {
+    "name": "WKD Blue",
+    "volumeMl": 275,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "WKD Iron Brew",
+    "volumeMl": 275,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Smirnoff Ice",
+    "volumeMl": 275,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "VK Blue",
+    "volumeMl": 275,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "VK Orange",
+    "volumeMl": 275,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Crabbies Original Ginger Beer",
+    "volumeMl": 500,
+    "abv": 4.8,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Hooch Lemon",
+    "volumeMl": 330,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Bacardi Breezer Watermelon",
+    "volumeMl": 275,
+    "abv": 4,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Gordon's Pink Gin & Tonic",
+    "volumeMl": 250,
+    "abv": 5,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Malibu & Cola",
+    "volumeMl": 250,
+    "abv": 5,
+    "category": "rtd",
+    "ean": null
+  },
+  {
+    "name": "Blossom Hill Pinot Grigio",
+    "volumeMl": 187,
+    "abv": 12.5,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "Blossom Hill White Zinfandel Rosé",
+    "volumeMl": 187,
+    "abv": 10.5,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "Jacob's Creek Chardonnay",
+    "volumeMl": 187,
+    "abv": 12.5,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "Echo Falls Rosé",
+    "volumeMl": 187,
+    "abv": 11.5,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "Hardy's VR Shiraz",
+    "volumeMl": 187,
+    "abv": 13.5,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "McGuigan Black Label Red",
+    "volumeMl": 250,
+    "abv": 13.5,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "McGuigan Black Label White",
+    "volumeMl": 250,
+    "abv": 12,
+    "category": "wine",
+    "ean": null
+  },
+  {
+    "name": "Marmalade on Rye",
+    "volumeMl": 330,
+    "abv": 9,
+    "category": "lager",
+    "ean": "5060395540043"
+  },
+  {
+    "name": "American Laid Back IPA",
+    "volumeMl": 330,
+    "abv": 4,
+    "category": "lager",
+    "ean": "00089333"
+  },
+  {
+    "name": "Limbo Series - Flemish Primitive Ale with Raspberries",
+    "volumeMl": 330,
+    "abv": 0.3,
+    "category": "lager",
+    "ean": "5704255119849"
+  },
+  {
+    "name": "Zed pale ale",
+    "volumeMl": 330,
+    "abv": 0.5,
+    "category": "lager",
+    "ean": "0634158576850"
+  },
+  {
+    "name": "Konx",
+    "volumeMl": 330,
+    "abv": 0.3,
+    "category": "lager",
+    "ean": "7350064992180"
+  },
+  {
+    "name": "Hatherwood purple panther",
+    "volumeMl": 500,
+    "abv": 5,
+    "category": "lager",
+    "ean": "20717353"
+  },
+  {
+    "name": "Lager",
+    "volumeMl": 350,
+    "abv": 2.1,
+    "category": "lager",
+    "ean": "5060552040003"
+  },
+  {
+    "name": "Luminous nights",
+    "volumeMl": 440,
+    "abv": 7.4,
+    "category": "lager",
+    "ean": "5060515451013"
+  },
+  {
+    "name": "Easy Now Beer",
+    "volumeMl": 330,
+    "abv": 3.3,
+    "category": "lager",
+    "ean": "5060424341559"
+  },
+  {
+    "name": "Corona extra",
+    "volumeMl": 355,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": "5507464196454"
+  },
+  {
+    "name": "Perlenbacher Premium Pils",
+    "volumeMl": 440,
+    "abv": 4.5,
+    "category": "lager",
+    "ean": "20388904"
+  },
+  {
+    "name": "Krombacher pils",
+    "volumeMl": 660,
+    "abv": 4.8,
+    "category": "lager",
+    "ean": "4008287058628"
+  },
+  {
+    "name": "Camden Pale Ale",
+    "volumeMl": 1320,
+    "abv": 4,
+    "category": "lager",
+    "ean": "5060228270932"
+  },
+  {
+    "name": "Stella Artois Gluten free",
+    "volumeMl": 330,
+    "abv": 4.6,
+    "category": "lager",
+    "ean": "5014379012934"
+  },
+  {
+    "name": "Suffolk Blonde",
+    "volumeMl": 500,
+    "abv": 4,
+    "category": "lager",
+    "ean": "4088600537672"
+  },
+  {
+    "name": "Malbec",
+    "volumeMl": 750,
+    "abv": 13.5,
+    "category": "wine",
+    "ean": "12583720"
+  },
+  {
+    "name": "Pinot Grigio",
+    "volumeMl": 187,
+    "abv": 8.7,
+    "category": "wine",
+    "ean": "5059697698231"
+  },
+  {
+    "name": "Bonarda Malbec",
+    "volumeMl": 750,
+    "abv": 10.4,
+    "category": "wine",
+    "ean": "5000128743204"
+  },
+  {
+    "name": "Mirador Mendoza faitrade malbec 2022",
+    "volumeMl": 750,
+    "abv": 13.5,
+    "category": "wine",
+    "ean": "01558098"
+  },
+  {
+    "name": "Comtes de champagne Blanc de Blancs 2002",
+    "volumeMl": 750,
+    "abv": 12,
+    "category": "wine",
+    "ean": "3016570001412"
+  },
+  {
+    "name": "Lussac Saint-Emilion 2012/2017",
+    "volumeMl": 750,
+    "abv": 13,
+    "category": "wine",
+    "ean": "3423290114030"
+  },
+  {
+    "name": "chenin blanc",
+    "volumeMl": 250,
+    "abv": 13,
+    "category": "wine",
+    "ean": "20256531"
+  },
+  {
+    "name": "Shiraz",
+    "volumeMl": 750,
+    "abv": 13,
+    "category": "wine",
+    "ean": "9310415011425"
+  },
+  {
+    "name": "Bacchus",
+    "volumeMl": 750,
+    "abv": 12,
+    "category": "wine",
+    "ean": "5026608000643"
+  },
+  {
+    "name": "Montepulciano d'Abruzzo",
+    "volumeMl": 750,
+    "abv": 12.5,
+    "category": "wine",
+    "ean": "8008530044497"
+  },
+  {
+    "name": "White wine",
+    "volumeMl": 750,
+    "abv": 8.4,
+    "category": "wine",
+    "ean": "5000129358308"
+  },
+  {
+    "name": "Sauvignon Blanc 2024 Marlborough",
+    "volumeMl": 750,
+    "abv": 12.5,
+    "category": "wine",
+    "ean": "5060110824663"
+  }
+]

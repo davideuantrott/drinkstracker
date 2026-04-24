@@ -255,11 +255,15 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Log a Drink</div>
-    <div class="label">Quick Select</div>
-    <div class="preset-grid" id="preset-grid"></div>
-    <div id="saved-section" style="display:none">
-      <div class="label" style="margin-top:4px;">Saved</div>
-      <div class="preset-grid" id="saved-grid"></div>
+    <input type="search" class="form-input library-search" id="f-library-search" placeholder="Search drinks library…" autocomplete="off">
+    <div id="library-results"></div>
+    <div id="quick-select-section">
+      <div class="label">Quick Select</div>
+      <div class="preset-grid" id="preset-grid"></div>
+      <div id="saved-section" style="display:none">
+        <div class="label" style="margin-top:4px;">Saved</div>
+        <div class="preset-grid" id="saved-grid"></div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label" for="f-name">Drink Name</label>

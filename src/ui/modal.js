@@ -1,6 +1,7 @@
 import { addLogEntry, deleteLogEntry, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
 import { calcUnits } from '../bac.js'
 import { PRESETS } from '../presets.js'
+import DRINKS_LIBRARY from '../drinks-library.json'
 
 let _presetSelected = false
 let _editId = null // ID of drink being edited, null when adding new
@@ -87,6 +88,58 @@ export function bindModalEvents() {
   })
   document.getElementById('f-volume').addEventListener('input', _updateUnitsDisplay)
   document.getElementById('f-abv').addEventListener('input', _updateUnitsDisplay)
+  document.getElementById('f-library-search').addEventListener('input', _onLibrarySearch)
+}
+
+function _onLibrarySearch() {
+  const q = document.getElementById('f-library-search').value.trim().toLowerCase()
+  const resultsEl = document.getElementById('library-results')
+  const quickSelectEl = document.getElementById('quick-select-section')
+
+  if (!q) {
+    resultsEl.innerHTML = ''
+    resultsEl.style.display = 'none'
+    quickSelectEl.style.display = ''
+    return
+  }
+
+  const matches = DRINKS_LIBRARY.filter(d => d.name.toLowerCase().includes(q)).slice(0, 8)
+  quickSelectEl.style.display = 'none'
+  resultsEl.style.display = 'block'
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = '<p class="library-no-results">No matches — fill in manually below</p>'
+    return
+  }
+
+  resultsEl.innerHTML = matches.map((d, i) => `
+    <button class="library-result" data-i="${i}">
+      <span class="library-result-name">${d.name}</span>
+      <span class="library-result-meta">${d.volumeMl} ml · ${d.abv}%</span>
+    </button>`).join('')
+
+  resultsEl.querySelectorAll('.library-result').forEach((btn, i) => {
+    btn.addEventListener('click', () => _selectLibraryEntry(matches[i]))
+  })
+}
+
+function _selectLibraryEntry(drink) {
+  document.getElementById('f-name').value = drink.name
+  document.getElementById('f-volume').value = drink.volumeMl
+  document.getElementById('f-abv').value = drink.abv
+  _presetSelected = true
+  _updateUnitsDisplay()
+  _resetLibrarySearch()
+  _clearSelections()
+  document.getElementById('f-cost').focus()
+}
+
+function _resetLibrarySearch() {
+  document.getElementById('f-library-search').value = ''
+  const resultsEl = document.getElementById('library-results')
+  resultsEl.innerHTML = ''
+  resultsEl.style.display = 'none'
+  document.getElementById('quick-select-section').style.display = ''
 }
 
 export function openModal() {
@@ -99,6 +152,7 @@ export function openModal() {
   document.getElementById('f-units-display').value = '—'
   document.getElementById('btn-add-drink').textContent = 'Log Drink'
   _clearSelections()
+  _resetLibrarySearch()
   const now = new Date()
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
@@ -115,6 +169,7 @@ export function openEditModal(drink) {
   document.getElementById('btn-add-drink').textContent = 'Save Changes'
   _updateUnitsDisplay()
   _clearSelections()
+  _resetLibrarySearch()
   const t = new Date(drink.timestamp)
   document.getElementById('f-time').value = t.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
