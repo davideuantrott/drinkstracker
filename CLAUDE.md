@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.2 (live)
+## Current state — Build 2.3 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -27,6 +27,13 @@ Changes made in Build 2.2:
 - **Live BAC chart on Now tab** — canvas chart below the BAC hero; colored gradient fill (green→amber→red keyed to legal limit), dashed limit line, vertical current-time marker, sober-time annotation; redraws every 60s via existing ticker
 - **Quick-add chips on Now tab** — last 3 unique drink types from log history shown as chips; tap to add instantly at current time; hidden when log is empty
 - **Enhanced Stats charts** — DAILY/WEEKLY/MONTHLY tab switcher replaces the two fixed chart cards; Daily shows BAC trend for today; Weekly shows 7-day bars + yellow 7-day rolling average line; Monthly shows 30-day bars + 30-day rolling average line
+
+Changes made in Build 2.3:
+- **BAC continuity across midnight** — BAC calculation on the Now tab uses a 24 h lookback window (`bacDrinks`) so drinks consumed just before midnight continue decaying correctly into the next morning; stats row (units/drinks/cals) still shows today-only figures
+- **Pannable Now-tab chart** — horizontal swipe on the BAC chart scrolls back up to 3 days; a date label appears in the top-right when panned; the now-marker hides when it scrolls off-screen; vertical swipes still scroll the page normally
+- **Safe-area / Dynamic Island padding** — `#main-content` gains `padding-top: env(safe-area-inset-top)` so the BAC hero clears the iPhone notch/Dynamic Island; sync dot position adjusted to match; today-tab drink list gains 80 px bottom padding so the last entry is never hidden under the FAB
+- **Legal Limit setting fix** — `parseFloat(0.80)` → `0.8` didn't match the `"0.80"` select option string; fixed with `.toFixed(2)` in `loadSettingsForm` so the saved value always round-trips correctly
+- **Log page delete & edit** — History tab entries now show a ✏ edit button (opens the add-drink modal pre-filled with existing values; button label changes to "Save Changes") and a ✕ delete button (asks for confirmation); the `at:edit-drink` custom event bridges log→modal without cross-importing
 
 ---
 
@@ -169,10 +176,6 @@ From `alcotrack-claude-code-handoff.md`:
 - Deduplication on `(timestamp, volumeMl, abv)` after import
 - After import, sync to Supabase via the existing sync layer
 
-### Drink edit
-- Currently drinks can only be deleted and re-added
-- Needs an edit flow (tap entry → edit sheet → save)
-
 ### Magic link / passwordless auth
 - Third auth option in the auth screen alongside Google and email/password
 - Supabase supports this out of the box: `supabase.auth.signInWithOtp({ email })`
@@ -202,7 +205,7 @@ From `alcotrack-claude-code-handoff.md`:
 | `migrateLocalToCloud()` | `src/storage.js` | Push all local entries to Supabase (first-login migration) |
 | `processQueue()` | `src/storage.js` | Flush pending offline sync operations |
 | `renderToday()` | `src/ui/today.js` | Re-render Now tab (BAC, live chart, quick-add, drink list) |
-| `drawNowBACChart(canvas, drinks, settings)` | `src/charts.js` | Live BAC chart for Now tab (colored gradient, sober annotation) |
+| `drawNowBACChart(canvas, drinks, settings, panOffsetMs)` | `src/charts.js` | Live BAC chart for Now tab; panOffsetMs shifts window back in time (0–3 days); returns msPerPx for touch handler |
 | `drawDailyBACChart(canvas, drinks, settings)` | `src/charts.js` | BAC trend chart for Stats DAILY tab |
 | `drawWeeklyChart(canvas, log)` | `src/charts.js` | 7-day bar chart + rolling avg for Stats WEEKLY tab |
 | `drawMonthlyChart(canvas, log)` | `src/charts.js` | 30-day bar chart + rolling avg for Stats MONTHLY tab |
@@ -212,6 +215,7 @@ From `alcotrack-claude-code-handoff.md`:
 | `getCustomDrinks()` | `src/storage.js` | Return array of user-saved custom drink presets |
 | `saveCustomDrink(drink)` | `src/storage.js` | Save a custom drink (deduplicates by name+vol+abv) |
 | `deleteCustomDrink(id)` | `src/storage.js` | Remove a custom drink by id |
-| `openModal()` | `src/ui/modal.js` | Open the add-drink bottom sheet |
+| `openModal()` | `src/ui/modal.js` | Open the add-drink bottom sheet (new drink) |
+| `openEditModal(drink)` | `src/ui/modal.js` | Open the add-drink modal pre-filled for editing an existing entry |
 | `showAuthScreen()` | `src/ui/auth-screen.js` | Show auth overlay, hide app |
 | `hideAuthScreen()` | `src/ui/auth-screen.js` | Hide auth overlay, show app |
