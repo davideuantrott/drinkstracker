@@ -2,7 +2,7 @@ import { calcBACAtTime, calcUnits } from './bac.js'
 
 // ── Now-tab live BAC chart ───────────────────────────────────────────────────
 
-export function drawNowBACChart(canvas, drinks, settings) {
+export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   const ctx = canvas.getContext('2d')
   const W = canvas.parentElement.clientWidth
   const H = 160
@@ -15,14 +15,20 @@ export function drawNowBACChart(canvas, drinks, settings) {
   const now = Date.now()
   const limit = parseFloat(settings.legalLimit)
 
+  // Clamp pan to 3-day max
+  panOffsetMs = Math.max(0, Math.min(panOffsetMs, 3 * 24 * 3600000))
+
   const firstTs = drinks.length
     ? drinks.reduce((m, d) => Math.min(m, d.timestamp), Infinity)
     : now
   const currentBAC = calcBACAtTime(drinks, now, settings)
   const soberMs = currentBAC > 0 ? now + (currentBAC / 0.15) * 3600000 : now
 
-  const tStart = Math.min(firstTs, now - 4 * 3600000)
-  const tEnd = Math.max(soberMs + 20 * 60000, now + 60 * 60000)
+  // Natural window then shift backwards by panOffsetMs
+  const naturalTStart = Math.min(firstTs, now - 4 * 3600000)
+  const naturalTEnd = Math.max(soberMs + 20 * 60000, now + 60 * 60000)
+  const tStart = naturalTStart - panOffsetMs
+  const tEnd = naturalTEnd - panOffsetMs
 
   const N = 120
   const pts = []
@@ -89,14 +95,16 @@ export function drawNowBACChart(canvas, drinks, settings) {
   })
   ctx.stroke()
 
-  // Current-time marker
+  // Current-time marker (only draw when visible)
   const nowX = toX(now)
-  ctx.save()
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)'
-  ctx.setLineDash([3, 3])
-  ctx.lineWidth = 1
-  ctx.beginPath(); ctx.moveTo(nowX, PT); ctx.lineTo(nowX, PT + cH); ctx.stroke()
-  ctx.restore()
+  if (nowX >= PL && nowX <= W - PR) {
+    ctx.save()
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'
+    ctx.setLineDash([3, 3])
+    ctx.lineWidth = 1
+    ctx.beginPath(); ctx.moveTo(nowX, PT); ctx.lineTo(nowX, PT + cH); ctx.stroke()
+    ctx.restore()
+  }
 
   // Sober-time annotation
   if (currentBAC > 0) {
@@ -126,6 +134,18 @@ export function drawNowBACChart(canvas, drinks, settings) {
     const d = new Date(t)
     ctx.fillText(d.getHours().toString().padStart(2, '0') + ':00', x, H - 5)
   }
+
+  // Pan indicator: show date in top-right when scrolled back
+  if (panOffsetMs > 0) {
+    const viewMid = new Date((tStart + tEnd) / 2)
+    const dayStr = viewMid.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    ctx.fillStyle = 'rgba(168,192,232,0.75)'
+    ctx.font = '600 9px Poppins,sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText('‹ ' + dayStr + ' ›', W - PR, PT + 10)
+  }
+
+  return cW > 0 ? (tEnd - tStart) / cW : 1
 }
 
 // ── Stats DAILY: BAC trend today (used in stats tab) ────────────────────────

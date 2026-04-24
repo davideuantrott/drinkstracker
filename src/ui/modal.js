@@ -1,8 +1,9 @@
-import { addLogEntry, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
+import { addLogEntry, deleteLogEntry, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
 import { calcUnits } from '../bac.js'
 import { PRESETS } from '../presets.js'
 
 let _presetSelected = false
+let _editId = null // ID of drink being edited, null when adding new
 
 export function buildPresetGrid() {
   const grid = document.getElementById('preset-grid')
@@ -89,15 +90,33 @@ export function bindModalEvents() {
 }
 
 export function openModal() {
+  _editId = null
   _presetSelected = false
   document.getElementById('f-name').value = ''
   document.getElementById('f-volume').value = ''
   document.getElementById('f-abv').value = ''
   document.getElementById('f-cost').value = ''
   document.getElementById('f-units-display').value = '—'
+  document.getElementById('btn-add-drink').textContent = 'Log Drink'
   _clearSelections()
   const now = new Date()
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
+  document.getElementById('add-modal').classList.add('open')
+  _buildSavedGrid()
+}
+
+export function openEditModal(drink) {
+  _editId = drink.id
+  _presetSelected = true // don't auto-save as custom when editing
+  document.getElementById('f-name').value = drink.name
+  document.getElementById('f-volume').value = drink.volumeMl
+  document.getElementById('f-abv').value = drink.abv
+  document.getElementById('f-cost').value = drink.cost || ''
+  document.getElementById('btn-add-drink').textContent = 'Save Changes'
+  _updateUnitsDisplay()
+  _clearSelections()
+  const t = new Date(drink.timestamp)
+  document.getElementById('f-time').value = t.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
 }
@@ -143,17 +162,22 @@ async function _addDrink() {
   const [h, m] = timeVal.split(':').map(Number)
   now.setHours(h, m, 0, 0)
 
+  if (_editId) {
+    // Edit mode: replace the existing entry
+    await deleteLogEntry(_editId)
+    _editId = null
+  } else if (!_presetSelected) {
+    saveCustomDrink({ name, vol, abv, icon: '🥤' })
+  }
+
   const entry = {
     id:        crypto.randomUUID(),
     timestamp: now.getTime(),
     name, volumeMl: vol, abv, cost
   }
 
-  if (!_presetSelected) {
-    saveCustomDrink({ name, vol, abv, icon: '🥤' })
-  }
-
   await addLogEntry(entry)
+  document.getElementById('btn-add-drink').textContent = 'Log Drink'
   closeModal()
   window.dispatchEvent(new CustomEvent('at:data-changed'))
 }

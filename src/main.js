@@ -3,7 +3,7 @@ import { isSupabaseEnabled, onAuthChange, getSession, signOut } from './auth.js'
 import { initStorage, pullFromSupabase, migrateLocalToCloud, hasMigrated, processQueue, clearLocalCache, getLog, onSyncStatusChange } from './storage.js'
 import { initAuthScreen, showAuthScreen, hideAuthScreen } from './ui/auth-screen.js'
 import { loadSettingsForm, bindSettingsEvents } from './ui/settings.js'
-import { buildPresetGrid, bindModalEvents, showMigrationModal, bindMigrationEvents } from './ui/modal.js'
+import { buildPresetGrid, bindModalEvents, showMigrationModal, bindMigrationEvents, openEditModal } from './ui/modal.js'
 import { renderToday } from './ui/today.js'
 import { renderLog } from './ui/log.js'
 import { renderStats } from './ui/stats.js'
@@ -94,6 +94,10 @@ function _bindGlobalEvents() {
   window.addEventListener('at:settings-changed', () => {
     renderToday()
     if (currentPage === 'stats') renderStats()
+  })
+
+  window.addEventListener('at:edit-drink', e => {
+    openEditModal(e.detail)
   })
 
   window.addEventListener('at:signout', async () => {

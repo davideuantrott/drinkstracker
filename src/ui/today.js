@@ -3,14 +3,28 @@ import { calcBACPermille, calcUnits, approxCalories, formatBAC, bacUnitLabel, ge
 import { getPresetIcon } from '../presets.js'
 import { drawNowBACChart } from '../charts.js'
 
+// Chart pan state — persists across re-renders
+let _panOffsetMs = 0
+let _msPerPx = null
+let _touchStartX = null
+let _touchStartY = null
+let _panAtStart = 0
+let _isPanning = false
+let _panSetup = false
+
 export function renderToday() {
   const log = getLog()
   const settings = getSettings()
 
+  // Today's drinks (since midnight) — used for stats display and the drink list
   const start = new Date(); start.setHours(0, 0, 0, 0)
   const todayDrinks = log.filter(d => d.timestamp >= start.getTime())
 
-  const bac = calcBACPermille(todayDrinks, settings)
+  // BAC drinks: look back 24 h so pre-midnight drinking carries over
+  const bacCutoff = Date.now() - 24 * 3600000
+  const bacDrinks = log.filter(d => d.timestamp >= bacCutoff)
+
+  const bac = calcBACPermille(bacDrinks, settings)
   const units = todayDrinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0)
   const cals = todayDrinks.reduce((s, d) => s + approxCalories(d.volumeMl, d.abv), 0)
   const limit = parseFloat(settings.legalLimit)
@@ -45,10 +59,15 @@ export function renderToday() {
 
   document.getElementById('bac-sober-time').textContent = getSoberTime(bac)
 
-  // Draw live BAC chart
+  // Draw live BAC chart; pass 4-day window so panning back shows past drinks
   const chartCanvas = document.getElementById('now-bac-chart')
   if (chartCanvas.parentElement.clientWidth > 0) {
-    drawNowBACChart(chartCanvas, todayDrinks, settings)
+    const chartDrinks = log.filter(d => d.timestamp >= Date.now() - 4 * 24 * 3600000)
+    _msPerPx = drawNowBACChart(chartCanvas, chartDrinks, settings, _panOffsetMs)
+    if (!_panSetup) {
+      _panSetup = true
+      _setupChartPan(chartCanvas)
+    }
   }
 
   // Quick-add chips (last 3 unique drink types from full log)
@@ -87,11 +106,51 @@ export function renderToday() {
   })
 }
 
+function _setupChartPan(canvas) {
+  canvas.addEventListener('touchstart', e => {
+    _touchStartX = e.touches[0].clientX
+    _touchStartY = e.touches[0].clientY
+    _panAtStart = _panOffsetMs
+    _isPanning = false
+  }, { passive: true })
+
+  canvas.addEventListener('touchmove', e => {
+    if (_touchStartX === null) return
+    const dx = e.touches[0].clientX - _touchStartX
+    const dy = e.touches[0].clientY - _touchStartY
+
+    if (!_isPanning) {
+      if (Math.abs(dx) > Math.abs(dy) + 8) {
+        _isPanning = true
+      } else if (Math.abs(dy) > 8) {
+        return // vertical — allow page scroll
+      } else {
+        return // undecided
+      }
+    }
+
+    e.preventDefault()
+
+    if (_msPerPx !== null) {
+      const MAX_BACK = 3 * 24 * 3600000
+      _panOffsetMs = Math.max(0, Math.min(MAX_BACK, _panAtStart - dx * _msPerPx))
+      const log = getLog()
+      const settings = getSettings()
+      const chartDrinks = log.filter(d => d.timestamp >= Date.now() - 4 * 24 * 3600000)
+      _msPerPx = drawNowBACChart(canvas, chartDrinks, settings, _panOffsetMs)
+    }
+  }, { passive: false })
+
+  canvas.addEventListener('touchend', () => {
+    _touchStartX = null
+    _isPanning = false
+  }, { passive: true })
+}
+
 function _renderQuickAdd(log, settings) {
   const section = document.getElementById('quick-add-section')
   const row = document.getElementById('quick-add-row')
 
-  // Derive last 3 unique drinks from log history
   const seen = new Set()
   const recents = []
   for (let i = log.length - 1; i >= 0 && recents.length < 3; i--) {

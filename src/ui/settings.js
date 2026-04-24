@@ -11,7 +11,7 @@ export async function loadSettingsForm() {
   document.getElementById('s-vol-unit').value = s.volUnit
   document.getElementById('s-currency').value = s.currency
   document.getElementById('s-weekly-goal').value = s.weeklyGoal
-  document.getElementById('s-legal-limit').value = s.legalLimit
+  document.getElementById('s-legal-limit').value = parseFloat(s.legalLimit).toFixed(2)
 
   const accountSection = document.getElementById('account-section')
   if (isSupabaseEnabled) {

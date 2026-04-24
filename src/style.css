@@ -107,7 +107,7 @@ html, body {
 
 /* ---- SYNC DOT ---- */
 .sync-dot {
-  position: fixed; top: 12px; right: 16px;
+  position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: 16px;
   width: 8px; height: 8px; border-radius: 50%;
   z-index: 150; cursor: default; display: none;
   transition: background 0.3s;
@@ -148,6 +148,7 @@ html, body {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(80px + var(--safe));
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ---- NAV ---- */
@@ -245,7 +246,7 @@ html, body {
 .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 
 /* ---- DRINK LOG ---- */
-.drink-log-section { padding: 0 16px 12px; }
+.drink-log-section { padding: 0 16px 80px; }
 .drink-log-title { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 .drink-entry {
   display: flex; align-items: center; gap: 12px;
@@ -260,7 +261,9 @@ html, body {
 .drink-entry-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drink-entry-meta { font-size: 12px; color: var(--muted); font-family: 'Roboto Mono', monospace; margin-top: 2px; }
 .drink-entry-units { font-family: 'Roboto Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent); }
-.drink-entry-del { background: none; border: none; color: var(--red); opacity: 0.5; cursor: pointer; padding: 4px; margin-left: 4px; }
+.drink-entry-edit { background: none; border: none; color: var(--muted); opacity: 0.6; cursor: pointer; padding: 4px; margin-left: 4px; font-size: 14px; }
+.drink-entry-edit:active { opacity: 1; color: var(--accent); }
+.drink-entry-del { background: none; border: none; color: var(--red); opacity: 0.5; cursor: pointer; padding: 4px; margin-left: 4px; font-size: 14px; }
 .drink-entry-del:active { opacity: 1; }
 
 .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
