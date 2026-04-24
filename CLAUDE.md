@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.4 (live)
+## Current state — Build 2.7 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -46,6 +46,10 @@ Changes made in Build 2.6:
 - **BAC bar spacing fix** — increased `.bac-status` `margin-top` from 12 px to 28 px so the amber "LIMIT" label on the bar doesn't collide with the "Below Legal Limit" status text
 - **Bottom nav alignment fix** — changed `align-items: flex-start` → `align-items: center` on `#bottom-nav`; icons now sit vertically centred in the 72 px bar with the safe-area inset correctly reserved below, eliminating dead space
 - **Per-entry emoji picker** — the add/edit modal now shows a row of 12 drink emoji buttons; the chosen emoji is stored as an `icon` field on each log entry and displayed in the Now tab and History tab; preset/saved/library selections auto-pick a matching emoji; requires `supabase/003_drink_icon.sql` (`ALTER TABLE drink_log ADD COLUMN IF NOT EXISTS icon TEXT`) to sync icons cross-device
+
+Changes made in Build 2.7:
+- **Retrospective drink logging** — the add-drink modal now has a Date field alongside the existing Time field; new drinks default to today, edits default to the drink's original date; the `_addDrink()` timestamp is built from both fields using local time (not UTC) so historical entries are logged accurately; date picker is capped at today to prevent future entries
+- **Bottom nav dead-space fix** — `#bottom-nav` now uses `align-items: flex-start` with `.nav-btn` explicitly sized to `height: 72px` and `justify-content: center`; icons are centred in the 72 px content zone only, and the safe-area inset below is truly empty (no longer pulling icons down into it)
 
 ---
 

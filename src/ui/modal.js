@@ -7,6 +7,11 @@ let _presetSelected = false
 let _editId = null
 let _selectedIcon = null
 
+function _localDateStr(d) {
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 function _setIcon(emoji) {
   _selectedIcon = emoji || null
   document.querySelectorAll('#f-icon-row .emoji-btn').forEach(btn => {
@@ -179,6 +184,8 @@ export function openModal() {
   _setIcon(null)
   _resetLibrarySearch()
   const now = new Date()
+  document.getElementById('f-date').value = _localDateStr(now)
+  document.getElementById('f-date').max = _localDateStr(now)
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
@@ -197,6 +204,9 @@ export function openEditModal(drink) {
   _setIcon(drink.icon || null)
   _resetLibrarySearch()
   const t = new Date(drink.timestamp)
+  const today = new Date()
+  document.getElementById('f-date').value = _localDateStr(t)
+  document.getElementById('f-date').max = _localDateStr(today)
   document.getElementById('f-time').value = t.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
@@ -239,9 +249,10 @@ async function _addDrink() {
 
   if (!vol || !abv) { alert('Please enter volume and ABV.'); return }
 
-  const now = new Date()
+  const dateVal = document.getElementById('f-date').value
+  const [year, month, day] = dateVal.split('-').map(Number)
   const [h, m] = timeVal.split(':').map(Number)
-  now.setHours(h, m, 0, 0)
+  const now = new Date(year, month - 1, day, h, m, 0, 0)
 
   if (_editId) {
     // Edit mode: replace the existing entry
