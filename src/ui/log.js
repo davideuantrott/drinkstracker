@@ -30,7 +30,7 @@ export function renderLog() {
       const costStr = d.cost > 0 ? ` · ${settings.currency}${parseFloat(d.cost).toFixed(2)}` : ''
       return `
         <div class="drink-entry">
-          <div class="drink-entry-icon">${getPresetIcon(d.name)}</div>
+          <div class="drink-entry-icon">${d.icon || getPresetIcon(d.name)}</div>
           <div class="drink-entry-info">
             <div class="drink-entry-name">${d.name}</div>
             <div class="drink-entry-meta">${d.volumeMl}ml · ${d.abv}% · ${timeStr}${costStr}</div>

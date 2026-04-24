@@ -157,7 +157,8 @@ export async function pullFromSupabase() {
       name:      row.name,
       volumeMl:  parseFloat(row.volume_ml),
       abv:       parseFloat(row.abv),
-      cost:      parseFloat(row.cost) || 0
+      cost:      parseFloat(row.cost) || 0,
+      icon:      row.icon || null
     }))
 
     const cloudIds = new Set(cloudLog.map(d => d.id))
@@ -198,7 +199,8 @@ export async function migrateLocalToCloud() {
       name:       d.name,
       volume_ml:  d.volumeMl,
       abv:        d.abv,
-      cost:       d.cost || 0
+      cost:       d.cost || 0,
+      icon:       d.icon || null
     }))
     const { error } = await supabase.from('drink_log').upsert(rows)
     if (error) throw error
@@ -255,7 +257,8 @@ export async function processQueue() {
         const { error } = await supabase.from('drink_log').upsert({
           id: op.id, user_id: userId,
           logged_at: new Date(op.timestamp).toISOString(),
-          name: op.name, volume_ml: op.volumeMl, abv: op.abv, cost: op.cost || 0
+          name: op.name, volume_ml: op.volumeMl, abv: op.abv, cost: op.cost || 0,
+          icon: op.icon || null
         })
         if (error) throw error
       } else if (op.action === 'delete') {
@@ -357,7 +360,8 @@ async function _syncEntry(action, entry) {
       const { error } = await supabase.from('drink_log').upsert({
         id: entry.id, user_id: userId,
         logged_at: new Date(entry.timestamp).toISOString(),
-        name: entry.name, volume_ml: entry.volumeMl, abv: entry.abv, cost: entry.cost || 0
+        name: entry.name, volume_ml: entry.volumeMl, abv: entry.abv, cost: entry.cost || 0,
+          icon: entry.icon || null
       })
       if (error) throw error
     } else if (action === 'delete') {

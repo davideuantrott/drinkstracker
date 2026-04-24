@@ -158,7 +158,7 @@ html, body {
   background: rgba(13,27,62,0.95);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
-  display: flex; align-items: flex-start; padding-top: 8px; z-index: 100;
+  display: flex; align-items: center; z-index: 100;
 }
 .nav-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -233,7 +233,7 @@ html, body {
   position: absolute; top: 14px; font-size: 9px; color: var(--amber);
   font-weight: 700; letter-spacing: 0.08em; transform: translateX(-50%); white-space: nowrap;
 }
-.bac-status { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; margin-top: 12px; }
+.bac-status { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; margin-top: 28px; }
 .bac-sober-time { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: 'Roboto Mono', monospace; }
 
 /* ---- STATS ROW ---- */
@@ -453,3 +453,12 @@ html, body {
 }
 .chart-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 #main-chart { display: block; width: calc(100% - 24px); margin: 0 12px; }
+
+/* ---- EMOJI PICKER ---- */
+.emoji-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.emoji-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 9px; font-size: 20px; line-height: 1;
+  cursor: pointer; transition: all 0.15s;
+}
+.emoji-btn.selected { background: rgba(255,77,125,0.15); border-color: var(--accent); }

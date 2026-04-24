@@ -42,6 +42,11 @@ Changes made in Build 2.4:
 Changes made in Build 2.5:
 - **BAC pool-model fix** — replaced per-drink independent metabolism with a running-pool model in `src/bac.js`; the old approach applied the 0.15‰/h elimination rate to each drink individually, causing it to under-report BAC significantly when multiple drinks were consumed close together (e.g. three pints spread over ~90 min showed ~20% low at peak, dropping to zero ~1.5 h earlier than correct); both `calcBACPermille` and `calcBACAtTime` now use the same `_poolBAC` helper so the Now tab and the BAC chart are both corrected
 
+Changes made in Build 2.6:
+- **BAC bar spacing fix** — increased `.bac-status` `margin-top` from 12 px to 28 px so the amber "LIMIT" label on the bar doesn't collide with the "Below Legal Limit" status text
+- **Bottom nav alignment fix** — changed `align-items: flex-start` → `align-items: center` on `#bottom-nav`; icons now sit vertically centred in the 72 px bar with the safe-area inset correctly reserved below, eliminating dead space
+- **Per-entry emoji picker** — the add/edit modal now shows a row of 12 drink emoji buttons; the chosen emoji is stored as an `icon` field on each log entry and displayed in the Now tab and History tab; preset/saved/library selections auto-pick a matching emoji; requires `supabase/003_drink_icon.sql` (`ALTER TABLE drink_log ADD COLUMN IF NOT EXISTS icon TEXT`) to sync icons cross-device
+
 ---
 
 ## Project structure

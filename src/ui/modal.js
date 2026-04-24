@@ -1,10 +1,27 @@
 import { addLogEntry, deleteLogEntry, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
 import { calcUnits } from '../bac.js'
-import { PRESETS } from '../presets.js'
+import { PRESETS, getPresetIcon } from '../presets.js'
 import DRINKS_LIBRARY from '../drinks-library.json'
 
 let _presetSelected = false
-let _editId = null // ID of drink being edited, null when adding new
+let _editId = null
+let _selectedIcon = null
+
+function _setIcon(emoji) {
+  _selectedIcon = emoji || null
+  document.querySelectorAll('#f-icon-row .emoji-btn').forEach(btn => {
+    btn.classList.toggle('selected', !!emoji && btn.dataset.emoji === emoji)
+  })
+}
+
+function _iconForCategory(category) {
+  const c = (category || '').toLowerCase()
+  if (c === 'wine') return '🍷'
+  if (c === 'spirits') return '🥃'
+  if (c === 'rtd') return '🍹'
+  if (c === 'prosecco' || c === 'sparkling') return '🥂'
+  return '🍺'
+}
 
 export function buildPresetGrid() {
   const grid = document.getElementById('preset-grid')
@@ -23,6 +40,7 @@ export function buildPresetGrid() {
       document.getElementById('f-name').value = p.name
       document.getElementById('f-volume').value = p.vol
       document.getElementById('f-abv').value = p.abv
+      _setIcon(p.icon)
       _updateUnitsDisplay()
     })
   })
@@ -60,6 +78,7 @@ function _buildSavedGrid() {
       document.getElementById('f-name').value = c.name
       document.getElementById('f-volume').value = c.vol
       document.getElementById('f-abv').value = c.abv
+      _setIcon(c.icon || '🥤')
       _updateUnitsDisplay()
     })
   })
@@ -89,6 +108,10 @@ export function bindModalEvents() {
   document.getElementById('f-volume').addEventListener('input', _updateUnitsDisplay)
   document.getElementById('f-abv').addEventListener('input', _updateUnitsDisplay)
   document.getElementById('f-library-search').addEventListener('input', _onLibrarySearch)
+  document.getElementById('f-icon-row').addEventListener('click', e => {
+    const btn = e.target.closest('.emoji-btn')
+    if (btn) _setIcon(btn.dataset.emoji)
+  })
 }
 
 function _onLibrarySearch() {
@@ -127,6 +150,7 @@ function _selectLibraryEntry(drink) {
   document.getElementById('f-name').value = drink.name
   document.getElementById('f-volume').value = drink.volumeMl
   document.getElementById('f-abv').value = drink.abv
+  _setIcon(_iconForCategory(drink.category))
   _presetSelected = true
   _updateUnitsDisplay()
   _resetLibrarySearch()
@@ -152,6 +176,7 @@ export function openModal() {
   document.getElementById('f-units-display').value = '—'
   document.getElementById('btn-add-drink').textContent = 'Log Drink'
   _clearSelections()
+  _setIcon(null)
   _resetLibrarySearch()
   const now = new Date()
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
@@ -169,6 +194,7 @@ export function openEditModal(drink) {
   document.getElementById('btn-add-drink').textContent = 'Save Changes'
   _updateUnitsDisplay()
   _clearSelections()
+  _setIcon(drink.icon || null)
   _resetLibrarySearch()
   const t = new Date(drink.timestamp)
   document.getElementById('f-time').value = t.toTimeString().slice(0, 5)
@@ -228,7 +254,8 @@ async function _addDrink() {
   const entry = {
     id:        crypto.randomUUID(),
     timestamp: now.getTime(),
-    name, volumeMl: vol, abv, cost
+    name, volumeMl: vol, abv, cost,
+    icon: _selectedIcon || getPresetIcon(name)
   }
 
   await addLogEntry(entry)
