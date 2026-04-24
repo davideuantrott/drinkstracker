@@ -1,33 +1,34 @@
-export function calcBACPermille(drinks, settings) {
+function _bacParams(settings) {
   const r = settings.gender === 'female' ? 0.55 : 0.68
   const weightKg = settings.weightUnit === 'lb'
     ? parseFloat(settings.weightKg) * 0.453592
     : parseFloat(settings.weightKg)
-  const now = Date.now()
-  let total = 0
-  for (const d of drinks) {
-    const hoursElapsed = (now - d.timestamp) / 3600000
-    const alcoholGrams = (d.volumeMl * d.abv / 100) * 0.789
-    const peakBAC = alcoholGrams / (weightKg * r)
-    total += Math.max(0, peakBAC - 0.15 * hoursElapsed)
+  return { r, weightKg }
+}
+
+// Pool model: liver metabolises at 0.15‰/h from the combined pool, not per-drink.
+// Process drinks in chronological order, drain the pool between each, then drain to target time.
+function _poolBAC(drinks, targetMs, r, weightKg) {
+  if (drinks.length === 0) return 0
+  const sorted = [...drinks].sort((a, b) => a.timestamp - b.timestamp)
+  let pool = 0
+  let prevMs = sorted[0].timestamp
+  for (const d of sorted) {
+    pool = Math.max(0, pool - 0.15 * (d.timestamp - prevMs) / 3600000)
+    pool += (d.volumeMl * d.abv / 100) * 0.789 / (weightKg * r)
+    prevMs = d.timestamp
   }
-  return Math.max(0, total)
+  return Math.max(0, pool - 0.15 * (targetMs - prevMs) / 3600000)
+}
+
+export function calcBACPermille(drinks, settings) {
+  const { r, weightKg } = _bacParams(settings)
+  return _poolBAC(drinks, Date.now(), r, weightKg)
 }
 
 export function calcBACAtTime(drinks, atTime, settings) {
-  const r = settings.gender === 'female' ? 0.55 : 0.68
-  const weightKg = settings.weightUnit === 'lb'
-    ? parseFloat(settings.weightKg) * 0.453592
-    : parseFloat(settings.weightKg)
-  let total = 0
-  for (const d of drinks) {
-    if (d.timestamp > atTime) continue
-    const hoursElapsed = (atTime - d.timestamp) / 3600000
-    const alcoholGrams = (d.volumeMl * d.abv / 100) * 0.789
-    const peakBAC = alcoholGrams / (weightKg * r)
-    total += Math.max(0, peakBAC - 0.15 * hoursElapsed)
-  }
-  return Math.max(0, total)
+  const { r, weightKg } = _bacParams(settings)
+  return _poolBAC(drinks.filter(d => d.timestamp <= atTime), atTime, r, weightKg)
 }
 
 export function calcUnits(volumeMl, abv) {

@@ -39,6 +39,9 @@ Changes made in Build 2.4:
 - **UK retail drinks library** — `src/drinks-library.json` contains 109 curated entries (lagers, ales, stouts, ciders, RTDs, small-format wines) with accurate ABV and standard UK retail volumes; a one-off Node.js scraper (`scripts/fetch-off-drinks.mjs`) queries Open Food Facts to expand and back-fill EAN barcodes
 - **Library search in add-drink modal** — a search box at the top of the modal filters the library as the user types; up to 8 matching results appear as tappable rows (name + volume + ABV); tapping pre-fills the form and restores the normal preset view; zero-state UI is unchanged
 
+Changes made in Build 2.5:
+- **BAC pool-model fix** — replaced per-drink independent metabolism with a running-pool model in `src/bac.js`; the old approach applied the 0.15‰/h elimination rate to each drink individually, causing it to under-report BAC significantly when multiple drinks were consumed close together (e.g. three pints spread over ~90 min showed ~20% low at peak, dropping to zero ~1.5 h earlier than correct); both `calcBACPermille` and `calcBACAtTime` now use the same `_poolBAC` helper so the Now tab and the BAC chart are both corrected
+
 ---
 
 ## Project structure
