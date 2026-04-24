@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.3 (live)
+## Current state — Build 2.4 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -15,7 +15,7 @@ Infrastructure:
 - **Vercel** — deployed and connected to this GitHub repo (auto-deploys on push to main); `VITE_SUPABASE_*` env vars set in Vercel project settings
 - **Google OAuth** — OAuth 2.0 client configured; Vercel URL added to authorised redirect URIs; Supabase Site URL updated to Vercel deployment URL
 
-Build compiles cleanly (`npm run build` — 55 modules, zero errors).
+Build compiles cleanly (`npm run build` — 56 modules, zero errors).
 
 Changes made in Build 2.1:
 - **BAC formula fixed** — removed erroneous `× 10` from Widmark denominator in `src/bac.js`; values were 10× too small
@@ -35,6 +35,10 @@ Changes made in Build 2.3:
 - **Legal Limit setting fix** — `parseFloat(0.80)` → `0.8` didn't match the `"0.80"` select option string; fixed with `.toFixed(2)` in `loadSettingsForm` so the saved value always round-trips correctly
 - **Log page delete & edit** — History tab entries now show a ✏ edit button (opens the add-drink modal pre-filled with existing values; button label changes to "Save Changes") and a ✕ delete button (asks for confirmation); the `at:edit-drink` custom event bridges log→modal without cross-importing
 
+Changes made in Build 2.4:
+- **UK retail drinks library** — `src/drinks-library.json` contains 109 curated entries (lagers, ales, stouts, ciders, RTDs, small-format wines) with accurate ABV and standard UK retail volumes; a one-off Node.js scraper (`scripts/fetch-off-drinks.mjs`) queries Open Food Facts to expand and back-fill EAN barcodes
+- **Library search in add-drink modal** — a search box at the top of the modal filters the library as the user types; up to 8 matching results appear as tappable rows (name + volume + ABV); tapping pre-fills the form and restores the normal preset view; zero-state UI is unchanged
+
 ---
 
 ## Project structure
@@ -47,6 +51,8 @@ drinkstracker/
 ├── .env.example            ← copy to .env and fill in Supabase keys
 ├── alcotracker.html        ← Build 1 backup (do not touch)
 ├── alcotrack-claude-code-handoff.md  ← original feature spec / handoff doc
+├── scripts/
+│   └── fetch-off-drinks.mjs ← one-off Node 18+ script: queries Open Food Facts for UK alcohol products and merges into drinks-library.json
 ├── supabase/
 │   ├── 001_initial.sql     ← drink_log + user_settings tables + RLS
 │   └── 002_user_customs.sql ← user_customs table + RLS (run after 001)
@@ -58,6 +64,7 @@ drinkstracker/
     ├── storage.js          ← state manager: localStorage + Supabase sync layer
     ├── charts.js           ← canvas charts: now BAC, daily BAC, weekly/monthly bars
     ├── presets.js          ← PRESETS array + getPresetIcon() helper
+    ├── drinks-library.json ← 109-entry curated UK retail drinks (name, volumeMl, abv, category, ean)
     └── ui/
         ├── today.js        ← renders Now tab (BAC hero, live chart, quick-add, drink log)
         ├── log.js          ← renders History tab (grouped by day)
@@ -217,5 +224,7 @@ From `alcotrack-claude-code-handoff.md`:
 | `deleteCustomDrink(id)` | `src/storage.js` | Remove a custom drink by id |
 | `openModal()` | `src/ui/modal.js` | Open the add-drink bottom sheet (new drink) |
 | `openEditModal(drink)` | `src/ui/modal.js` | Open the add-drink modal pre-filled for editing an existing entry |
+| `_onLibrarySearch()` | `src/ui/modal.js` | Filters `DRINKS_LIBRARY` on input, renders result rows, hides preset section |
+| `_selectLibraryEntry(drink)` | `src/ui/modal.js` | Pre-fills form from a library entry, resets search |
 | `showAuthScreen()` | `src/ui/auth-screen.js` | Show auth overlay, hide app |
 | `hideAuthScreen()` | `src/ui/auth-screen.js` | Hide auth overlay, show app |
