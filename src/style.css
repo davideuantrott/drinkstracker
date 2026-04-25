@@ -154,14 +154,14 @@ html, body {
 /* ---- NAV ---- */
 #bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
-  height: calc(72px + var(--safe)); padding-bottom: var(--safe);
+  height: 72px;
   background: rgba(13,27,62,0.95);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
-  display: flex; align-items: flex-start; z-index: 100;
+  display: flex; align-items: center; z-index: 100;
 }
 .nav-btn {
-  flex: 1; height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   background: none; border: none; color: var(--muted);
   font-family: 'Poppins', sans-serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.05em; cursor: pointer; transition: color 0.2s; padding: 0;
