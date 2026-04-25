@@ -49,7 +49,7 @@ Changes made in Build 2.6:
 
 Changes made in Build 2.7:
 - **Retrospective drink logging** — the add-drink modal now has a Date field alongside the existing Time field; new drinks default to today, edits default to the drink's original date; the `_addDrink()` timestamp is built from both fields using local time (not UTC) so historical entries are logged accurately; date picker is capped at today to prevent future entries
-- **Bottom nav dead-space fix** — `#bottom-nav` now uses `align-items: flex-start` with `.nav-btn` explicitly sized to `height: 72px` and `justify-content: center`; icons are centred in the 72 px content zone only, and the safe-area inset below is truly empty (no longer pulling icons down into it)
+- **Bottom nav dead-space fix (final)** — `#bottom-nav` is now a flat `72px` with no safe-area component; the body background (`#0D1B3E`) fills the home-indicator zone below it naturally (same colour, seamless); previous attempts kept `height: calc(72px + safe-area)` which painted the navy background over the full height, creating visible dead space regardless of icon alignment
 
 ---
 
