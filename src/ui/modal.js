@@ -1,4 +1,4 @@
-import { addLogEntry, deleteLogEntry, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
+import { addLogEntry, deleteLogEntry, getLog, getCustomDrinks, saveCustomDrink, deleteCustomDrink } from '../storage.js'
 import { calcUnits } from '../bac.js'
 import { PRESETS, getPresetIcon } from '../presets.js'
 import DRINKS_LIBRARY from '../drinks-library.json'
@@ -98,9 +98,52 @@ function _buildSavedGrid() {
 }
 
 function _clearSelections() {
-  document.querySelectorAll('#preset-grid .preset-chip, #saved-grid .preset-chip')
+  document.querySelectorAll('#preset-grid .preset-chip, #saved-grid .preset-chip, #recent-grid .preset-chip')
     .forEach(c => c.classList.remove('selected'))
   _presetSelected = false
+}
+
+function _buildRecentGrid() {
+  const log = getLog()
+  const section = document.getElementById('recent-section')
+  const grid = document.getElementById('recent-grid')
+
+  const seen = new Set()
+  const recents = []
+  for (let i = log.length - 1; i >= 0; i--) {
+    const d = log[i]
+    const key = `${d.name}|${d.volumeMl}|${d.abv}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      recents.push(d)
+    }
+  }
+
+  if (recents.length === 0) {
+    section.style.display = 'none'
+    return
+  }
+
+  section.style.display = 'block'
+  grid.innerHTML = recents.map((d, i) => `
+    <div class="preset-chip" data-ri="${i}">
+      <div class="preset-chip-icon">${d.icon || getPresetIcon(d.name)}</div>
+      <div class="preset-chip-name">${d.name}</div>
+    </div>`).join('')
+
+  grid.querySelectorAll('.preset-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      _clearSelections()
+      chip.classList.add('selected')
+      _presetSelected = true
+      const d = recents[parseInt(chip.dataset.ri)]
+      document.getElementById('f-name').value = d.name
+      document.getElementById('f-volume').value = d.volumeMl
+      document.getElementById('f-abv').value = d.abv
+      _setIcon(d.icon || getPresetIcon(d.name))
+      _updateUnitsDisplay()
+    })
+  })
 }
 
 export function bindModalEvents() {
@@ -189,6 +232,7 @@ export function openModal() {
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
+  _buildRecentGrid()
 }
 
 export function openEditModal(drink) {
@@ -210,6 +254,7 @@ export function openEditModal(drink) {
   document.getElementById('f-time').value = t.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
+  _buildRecentGrid()
 }
 
 export function closeModal() {

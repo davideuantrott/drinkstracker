@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.7 (live)
+## Current state — Build 2.8 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -50,6 +50,9 @@ Changes made in Build 2.6:
 Changes made in Build 2.7:
 - **Retrospective drink logging** — the add-drink modal now has a Date field alongside the existing Time field; new drinks default to today, edits default to the drink's original date; the `_addDrink()` timestamp is built from both fields using local time (not UTC) so historical entries are logged accurately; date picker is capped at today to prevent future entries
 - **Bottom nav dead-space fix (final)** — `#bottom-nav` is now a flat `72px` with no safe-area component; the body background (`#0D1B3E`) fills the home-indicator zone below it naturally (same colour, seamless); previous attempts kept `height: calc(72px + safe-area)` which painted the navy background over the full height, creating visible dead space regardless of icon alignment
+
+Changes made in Build 2.8:
+- **Previously Logged section in add-drink modal** — a "Previously Logged" chip grid appears below the Saved section in the modal; shows every unique drink from the full log (deduped by name+vol+abv, most-recent-first); tapping a chip pre-fills the form and sets `_presetSelected = true` so the drink is not auto-saved as a custom; section is hidden when the log is empty; implemented in `src/ui/modal.js` (`_buildRecentGrid`) following the same pattern as the existing Saved/Presets sections
 
 ---
 
