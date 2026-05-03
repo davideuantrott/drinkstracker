@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.8 (live)
+## Current state — Build 2.9 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -53,6 +53,12 @@ Changes made in Build 2.7:
 
 Changes made in Build 2.8:
 - **Previously Logged section in add-drink modal** — a "Previously Logged" chip grid appears below the Saved section in the modal; shows every unique drink from the full log (deduped by name+vol+abv, most-recent-first); tapping a chip pre-fills the form and sets `_presetSelected = true` so the drink is not auto-saved as a custom; section is hidden when the log is empty; implemented in `src/ui/modal.js` (`_buildRecentGrid`) following the same pattern as the existing Saved/Presets sections
+
+Changes made in Build 2.9:
+- **PWA icons** — added `public/icons/android/` (192, 512 px) and `public/icons/ios/` (180 px) copied from the `icons/` folder; `vite.config.js` manifest now declares all three icon sizes (512 also flagged `any maskable`); `index.html` adds `<link rel="apple-touch-icon" href="/icons/ios/180.png">` for iOS home-screen quality
+- **Chart x-axis label overlap fixed** — `drawNowBACChart` now computes step size from available canvas width (`cW / 42 px per label`) instead of hardcoded thresholds, ensuring labels never crowd regardless of window size
+- **Chart scroll direction fixed** — swipe right now pans back in time, swipe left returns toward present (changed sign in `_panAtStart + dx * _msPerPx`)
+- **Auto-update for all users** — `src/main.js` listens for the service worker `controllerchange` event and reloads the page; combined with `registerType: 'autoUpdate'` in vite-plugin-pwa this means every Vercel deploy automatically propagates to all open clients within one page lifecycle
 
 ---
 
@@ -205,7 +211,7 @@ From `alcotrack-claude-code-handoff.md`:
 ### Known tech debt
 | Item | Notes |
 |---|---|
-| No PWA icons | `vite-plugin-pwa` config has no icons — add `pwa-192x192.png` and `pwa-512x512.png` to `public/` and reference them in `vite.config.js` manifest |
+| ~~No PWA icons~~ | Fixed in Build 2.9 — icons in `public/icons/` |
 | BAC chart uses raw canvas | Works fine; could move to Chart.js for maintainability |
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
 | Calories are approximate | Label more clearly in UI |

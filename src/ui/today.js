@@ -133,7 +133,7 @@ function _setupChartPan(canvas) {
 
     if (_msPerPx !== null) {
       const MAX_BACK = 3 * 24 * 3600000
-      _panOffsetMs = Math.max(0, Math.min(MAX_BACK, _panAtStart - dx * _msPerPx))
+      _panOffsetMs = Math.max(0, Math.min(MAX_BACK, _panAtStart + dx * _msPerPx))
       const log = getLog()
       const settings = getSettings()
       const chartDrinks = log.filter(d => d.timestamp >= Date.now() - 4 * 24 * 3600000)

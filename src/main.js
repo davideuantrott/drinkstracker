@@ -114,6 +114,12 @@ function _bindGlobalEvents() {
   })
 
   setInterval(() => { if (currentPage === 'today') renderToday() }, 60000)
+
+  // Reload when a new service worker takes control so users always get the latest version
+  let _swRefreshing = false
+  navigator.serviceWorker?.addEventListener('controllerchange', () => {
+    if (!_swRefreshing) { _swRefreshing = true; window.location.reload() }
+  })
 }
 
 function _initSyncDot() {

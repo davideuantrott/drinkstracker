@@ -119,12 +119,15 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
     }
   }
 
-  // X-axis time labels
+  // X-axis time labels — step chosen so labels never overlap (~40px min spacing)
   ctx.fillStyle = 'rgba(168,192,232,0.65)'
   ctx.font = '9px "Roboto Mono",monospace'
   ctx.textAlign = 'center'
   const totalHours = (tEnd - tStart) / 3600000
-  const step = totalHours <= 6 ? 1 : totalHours <= 12 ? 2 : 4
+  const maxLabels = Math.floor(cW / 42)
+  const minHoursPerLabel = totalHours / Math.max(maxLabels, 1)
+  const niceSteps = [1, 2, 3, 4, 6, 8, 12, 24]
+  const step = niceSteps.find(s => s >= minHoursPerLabel) || 24
   const anchor = new Date(tStart)
   anchor.setMinutes(0, 0, 0)
   anchor.setHours(anchor.getHours() + 1)
