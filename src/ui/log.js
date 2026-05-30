@@ -36,6 +36,7 @@ export function renderLog() {
             <div class="drink-entry-meta">${d.volumeMl}ml · ${d.abv}% · ${timeStr}${costStr}</div>
           </div>
           <div class="drink-entry-units">${u}</div>
+          <button class="drink-entry-dup" data-id="${d.id}" aria-label="Duplicate">⎘</button>
           <button class="drink-entry-edit" data-id="${d.id}" aria-label="Edit">✏</button>
           <button class="drink-entry-del" data-id="${d.id}" aria-label="Delete">✕</button>
         </div>`
@@ -47,6 +48,14 @@ export function renderLog() {
       </div>
       <div style="padding:0 16px;">${items}</div>`
   }).join('')
+
+  el.querySelectorAll('.drink-entry-dup').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = e.currentTarget.dataset.id
+      const drink = log.find(d => d.id === id)
+      if (drink) window.dispatchEvent(new CustomEvent('at:duplicate-drink', { detail: drink }))
+    })
+  })
 
   el.querySelectorAll('.drink-entry-del').forEach(btn => {
     btn.addEventListener('click', async e => {

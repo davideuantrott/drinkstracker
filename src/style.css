@@ -261,6 +261,8 @@ html, body {
 .drink-entry-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drink-entry-meta { font-size: 12px; color: var(--muted); font-family: 'Roboto Mono', monospace; margin-top: 2px; }
 .drink-entry-units { font-family: 'Roboto Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent); }
+.drink-entry-dup { background: none; border: none; color: var(--muted); opacity: 0.6; cursor: pointer; padding: 4px; margin-left: 4px; font-size: 14px; }
+.drink-entry-dup:active { opacity: 1; color: var(--accent2); }
 .drink-entry-edit { background: none; border: none; color: var(--muted); opacity: 0.6; cursor: pointer; padding: 4px; margin-left: 4px; font-size: 14px; }
 .drink-entry-edit:active { opacity: 1; color: var(--accent); }
 .drink-entry-del { background: none; border: none; color: var(--red); opacity: 0.5; cursor: pointer; padding: 4px; margin-left: 4px; font-size: 14px; }
@@ -320,7 +322,9 @@ html, body {
 .preset-chip:active, .preset-chip.selected { background: rgba(255,77,125,0.15); border-color: var(--accent); }
 .preset-chip-icon { font-size: 22px; }
 .preset-chip-name { font-size: 11px; font-weight: 700; margin-top: 4px; color: var(--muted); }
+.preset-chip-meta { font-size: 9px; color: rgba(168,192,232,0.55); margin-top: 2px; font-family: 'Roboto Mono', monospace; }
 .preset-chip.selected .preset-chip-name { color: var(--accent); }
+.preset-chip.selected .preset-chip-meta { color: rgba(255,77,125,0.7); }
 
 .custom-chip-del {
   position: absolute; top: 4px; right: 6px;
@@ -331,17 +335,35 @@ html, body {
 .custom-chip-del:active { opacity: 1; color: var(--red); }
 
 .library-search { margin-bottom: 12px; }
-#library-results { margin-bottom: 4px; }
-.library-result {
-  display: flex; align-items: center; justify-content: space-between;
+.label-sub { font-size: 10px; font-weight: 400; color: rgba(168,192,232,0.5); }
+
+/* Unified search results */
+#unified-results { margin-bottom: 4px; }
+.unified-group-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(168,192,232,0.45); padding: 6px 2px 3px; }
+.unified-result {
+  display: flex; align-items: center; gap: 10px;
   width: 100%; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 10px; padding: 11px 14px; margin-bottom: 6px;
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
   cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s;
 }
-.library-result:active { background: rgba(255,77,125,0.15); border-color: var(--accent); }
-.library-result-name { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: #fff; }
-.library-result-meta { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; margin-left: 8px; }
-.library-no-results { font-size: 13px; color: var(--muted); text-align: center; padding: 10px 0 6px; }
+.unified-result:active { background: rgba(255,77,125,0.15); border-color: var(--accent); }
+.unified-result-icon { font-size: 18px; flex-shrink: 0; }
+.unified-result-name { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: #fff; flex: 1; }
+.unified-result-meta { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.unified-no-results { font-size: 13px; color: var(--muted); text-align: center; padding: 10px 0 6px; }
+
+/* Recent drinks list */
+#recent-list { margin-bottom: 8px; }
+.recent-result {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
+  cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s;
+}
+.recent-result:active { background: rgba(255,77,125,0.15); border-color: var(--accent); }
+.recent-result-icon { font-size: 18px; flex-shrink: 0; }
+.recent-result-name { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: #fff; flex: 1; }
+.recent-result-meta { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--muted); white-space: nowrap; }
 
 .btn-primary {
   width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-end));
@@ -447,7 +469,7 @@ html, body {
 }
 .chart-tab {
   flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
-  color: var(--muted); font-family: 'Poppins',sans-serif; font-size: 11px;
+  color: var(--muted); font-family: 'Poppins',sans-serif; font-size: 10px;
   font-weight: 700; letter-spacing: 0.1em; padding: 12px 4px 10px;
   cursor: pointer; transition: color 0.15s, border-color 0.15s;
 }

@@ -34,6 +34,7 @@ export function buildPresetGrid() {
     <div class="preset-chip" data-i="${i}">
       <div class="preset-chip-icon">${p.icon}</div>
       <div class="preset-chip-name">${p.name}</div>
+      <div class="preset-chip-meta">${p.vol}ml · ${p.abv}%</div>
     </div>`).join('')
 
   grid.querySelectorAll('.preset-chip').forEach(chip => {
@@ -69,6 +70,7 @@ function _buildSavedGrid() {
       <button class="custom-chip-del" data-del-id="${c.id}" aria-label="Remove">×</button>
       <div class="preset-chip-icon">${c.icon || '🥤'}</div>
       <div class="preset-chip-name">${c.name}</div>
+      <div class="preset-chip-meta">${c.vol}ml · ${c.abv}%</div>
     </div>`).join('')
 
   grid.querySelectorAll('.preset-chip').forEach(chip => {
@@ -98,15 +100,15 @@ function _buildSavedGrid() {
 }
 
 function _clearSelections() {
-  document.querySelectorAll('#preset-grid .preset-chip, #saved-grid .preset-chip, #recent-grid .preset-chip')
+  document.querySelectorAll('#preset-grid .preset-chip, #saved-grid .preset-chip')
     .forEach(c => c.classList.remove('selected'))
   _presetSelected = false
 }
 
-function _buildRecentGrid() {
+export function _buildRecentList() {
   const log = getLog()
   const section = document.getElementById('recent-section')
-  const grid = document.getElementById('recent-grid')
+  const list = document.getElementById('recent-list')
 
   const seen = new Set()
   const recents = []
@@ -125,23 +127,24 @@ function _buildRecentGrid() {
   }
 
   section.style.display = 'block'
-  grid.innerHTML = recents.map((d, i) => `
-    <div class="preset-chip" data-ri="${i}">
-      <div class="preset-chip-icon">${d.icon || getPresetIcon(d.name)}</div>
-      <div class="preset-chip-name">${d.name}</div>
-    </div>`).join('')
+  list.innerHTML = recents.map((d, i) => `
+    <button class="recent-result" data-ri="${i}">
+      <span class="recent-result-icon">${d.icon || getPresetIcon(d.name)}</span>
+      <span class="recent-result-name">${d.name}</span>
+      <span class="recent-result-meta">${d.volumeMl}ml · ${d.abv}%</span>
+    </button>`).join('')
 
-  grid.querySelectorAll('.preset-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      _clearSelections()
-      chip.classList.add('selected')
-      _presetSelected = true
-      const d = recents[parseInt(chip.dataset.ri)]
+  list.querySelectorAll('.recent-result').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = recents[parseInt(btn.dataset.ri)]
       document.getElementById('f-name').value = d.name
       document.getElementById('f-volume').value = d.volumeMl
       document.getElementById('f-abv').value = d.abv
       _setIcon(d.icon || getPresetIcon(d.name))
+      _presetSelected = true
+      _clearSelections()
       _updateUnitsDisplay()
+      _hideUnifiedResults()
     })
   })
 }
@@ -155,62 +158,118 @@ export function bindModalEvents() {
   })
   document.getElementById('f-volume').addEventListener('input', _updateUnitsDisplay)
   document.getElementById('f-abv').addEventListener('input', _updateUnitsDisplay)
-  document.getElementById('f-library-search').addEventListener('input', _onLibrarySearch)
+  document.getElementById('f-unified-search').addEventListener('input', _onUnifiedSearch)
   document.getElementById('f-icon-row').addEventListener('click', e => {
     const btn = e.target.closest('.emoji-btn')
     if (btn) _setIcon(btn.dataset.emoji)
   })
 }
 
-function _onLibrarySearch() {
-  const q = document.getElementById('f-library-search').value.trim().toLowerCase()
-  const resultsEl = document.getElementById('library-results')
+function _onUnifiedSearch() {
+  const q = document.getElementById('f-unified-search').value.trim().toLowerCase()
+  const resultsEl = document.getElementById('unified-results')
   const quickSelectEl = document.getElementById('quick-select-section')
 
   if (!q) {
-    resultsEl.innerHTML = ''
-    resultsEl.style.display = 'none'
-    quickSelectEl.style.display = ''
+    _hideUnifiedResults()
     return
   }
 
-  const matches = DRINKS_LIBRARY.filter(d => d.name.toLowerCase().includes(q)).slice(0, 8)
   quickSelectEl.style.display = 'none'
   resultsEl.style.display = 'block'
 
-  if (matches.length === 0) {
-    resultsEl.innerHTML = '<p class="library-no-results">No matches — fill in manually below</p>'
+  const log = getLog()
+  const seen = new Set()
+  const logMatches = []
+  for (let i = log.length - 1; i >= 0; i--) {
+    const d = log[i]
+    const key = `${d.name}|${d.volumeMl}|${d.abv}`
+    if (!seen.has(key) && d.name.toLowerCase().includes(q)) {
+      seen.add(key)
+      logMatches.push(d)
+    }
+    if (logMatches.length >= 5) break
+  }
+
+  const presetMatches = PRESETS.filter(p => p.name.toLowerCase().includes(q)).slice(0, 3)
+  const libMatches = DRINKS_LIBRARY.filter(d => d.name.toLowerCase().includes(q)).slice(0, 5)
+
+  if (logMatches.length === 0 && presetMatches.length === 0 && libMatches.length === 0) {
+    resultsEl.innerHTML = '<p class="unified-no-results">No matches — fill in manually below</p>'
     return
   }
 
-  resultsEl.innerHTML = matches.map((d, i) => `
-    <button class="library-result" data-i="${i}">
-      <span class="library-result-name">${d.name}</span>
-      <span class="library-result-meta">${d.volumeMl} ml · ${d.abv}%</span>
-    </button>`).join('')
+  let html = ''
 
-  resultsEl.querySelectorAll('.library-result').forEach((btn, i) => {
-    btn.addEventListener('click', () => _selectLibraryEntry(matches[i]))
+  if (logMatches.length > 0) {
+    html += '<div class="unified-group-label">From your history</div>'
+    html += logMatches.map((d, i) => `
+      <button class="unified-result" data-source="log" data-i="${i}">
+        <span class="unified-result-icon">${d.icon || getPresetIcon(d.name)}</span>
+        <span class="unified-result-name">${d.name}</span>
+        <span class="unified-result-meta">${d.volumeMl}ml · ${d.abv}%</span>
+      </button>`).join('')
+  }
+
+  if (presetMatches.length > 0) {
+    html += '<div class="unified-group-label">Quick select</div>'
+    html += presetMatches.map((p, i) => `
+      <button class="unified-result" data-source="preset" data-i="${i}">
+        <span class="unified-result-icon">${p.icon}</span>
+        <span class="unified-result-name">${p.name}</span>
+        <span class="unified-result-meta">${p.vol}ml · ${p.abv}%</span>
+      </button>`).join('')
+  }
+
+  if (libMatches.length > 0) {
+    html += '<div class="unified-group-label">From library</div>'
+    html += libMatches.map((d, i) => `
+      <button class="unified-result" data-source="lib" data-i="${i}">
+        <span class="unified-result-icon">${_iconForCategory(d.category)}</span>
+        <span class="unified-result-name">${d.name}</span>
+        <span class="unified-result-meta">${d.volumeMl}ml · ${d.abv}%</span>
+      </button>`).join('')
+  }
+
+  resultsEl.innerHTML = html
+
+  resultsEl.querySelectorAll('.unified-result').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const source = btn.dataset.source
+      const i = parseInt(btn.dataset.i)
+      if (source === 'log') {
+        const d = logMatches[i]
+        document.getElementById('f-name').value = d.name
+        document.getElementById('f-volume').value = d.volumeMl
+        document.getElementById('f-abv').value = d.abv
+        _setIcon(d.icon || getPresetIcon(d.name))
+        _presetSelected = true
+      } else if (source === 'preset') {
+        const p = presetMatches[i]
+        document.getElementById('f-name').value = p.name
+        document.getElementById('f-volume').value = p.vol
+        document.getElementById('f-abv').value = p.abv
+        _setIcon(p.icon)
+        _presetSelected = true
+      } else {
+        const d = libMatches[i]
+        document.getElementById('f-name').value = d.name
+        document.getElementById('f-volume').value = d.volumeMl
+        document.getElementById('f-abv').value = d.abv
+        _setIcon(_iconForCategory(d.category))
+        _presetSelected = true
+      }
+      _clearSelections()
+      _updateUnitsDisplay()
+      _hideUnifiedResults()
+    })
   })
 }
 
-function _selectLibraryEntry(drink) {
-  document.getElementById('f-name').value = drink.name
-  document.getElementById('f-volume').value = drink.volumeMl
-  document.getElementById('f-abv').value = drink.abv
-  _setIcon(_iconForCategory(drink.category))
-  _presetSelected = true
-  _updateUnitsDisplay()
-  _resetLibrarySearch()
-  _clearSelections()
-  document.getElementById('f-cost').focus()
-}
-
-function _resetLibrarySearch() {
-  document.getElementById('f-library-search').value = ''
-  const resultsEl = document.getElementById('library-results')
-  resultsEl.innerHTML = ''
-  resultsEl.style.display = 'none'
+function _hideUnifiedResults() {
+  document.getElementById('f-unified-search').value = ''
+  document.getElementById('unified-results').innerHTML = ''
+  document.getElementById('unified-results').style.display = 'none'
   document.getElementById('quick-select-section').style.display = ''
 }
 
@@ -225,19 +284,19 @@ export function openModal() {
   document.getElementById('btn-add-drink').textContent = 'Log Drink'
   _clearSelections()
   _setIcon(null)
-  _resetLibrarySearch()
+  _hideUnifiedResults()
   const now = new Date()
   document.getElementById('f-date').value = _localDateStr(now)
   document.getElementById('f-date').max = _localDateStr(now)
   document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
-  _buildRecentGrid()
+  _buildRecentList()
 }
 
 export function openEditModal(drink) {
   _editId = drink.id
-  _presetSelected = true // don't auto-save as custom when editing
+  _presetSelected = true
   document.getElementById('f-name').value = drink.name
   document.getElementById('f-volume').value = drink.volumeMl
   document.getElementById('f-abv').value = drink.abv
@@ -246,7 +305,7 @@ export function openEditModal(drink) {
   _updateUnitsDisplay()
   _clearSelections()
   _setIcon(drink.icon || null)
-  _resetLibrarySearch()
+  _hideUnifiedResults()
   const t = new Date(drink.timestamp)
   const today = new Date()
   document.getElementById('f-date').value = _localDateStr(t)
@@ -254,7 +313,28 @@ export function openEditModal(drink) {
   document.getElementById('f-time').value = t.toTimeString().slice(0, 5)
   document.getElementById('add-modal').classList.add('open')
   _buildSavedGrid()
-  _buildRecentGrid()
+  _buildRecentList()
+}
+
+export function openDuplicateModal(drink) {
+  _editId = null
+  _presetSelected = true
+  document.getElementById('f-name').value = drink.name
+  document.getElementById('f-volume').value = drink.volumeMl
+  document.getElementById('f-abv').value = drink.abv
+  document.getElementById('f-cost').value = drink.cost || ''
+  document.getElementById('btn-add-drink').textContent = 'Log Drink'
+  _updateUnitsDisplay()
+  _clearSelections()
+  _setIcon(drink.icon || null)
+  _hideUnifiedResults()
+  const now = new Date()
+  document.getElementById('f-date').value = _localDateStr(now)
+  document.getElementById('f-date').max = _localDateStr(now)
+  document.getElementById('f-time').value = now.toTimeString().slice(0, 5)
+  document.getElementById('add-modal').classList.add('open')
+  _buildSavedGrid()
+  _buildRecentList()
 }
 
 export function closeModal() {
@@ -300,7 +380,6 @@ async function _addDrink() {
   const now = new Date(year, month - 1, day, h, m, 0, 0)
 
   if (_editId) {
-    // Edit mode: replace the existing entry
     await deleteLogEntry(_editId)
     _editId = null
   } else if (!_presetSelected) {

@@ -99,6 +99,7 @@
             <button class="chart-tab active" data-chart="daily">DAILY</button>
             <button class="chart-tab" data-chart="weekly">WEEKLY</button>
             <button class="chart-tab" data-chart="monthly">MONTHLY</button>
+            <button class="chart-tab" data-chart="cals">CALS</button>
           </div>
           <canvas id="main-chart"></canvas>
         </div>
@@ -118,6 +119,8 @@
           <div class="stat-card"><div class="stat-card-value mono" id="stat-month-total">0.0</div><div class="stat-card-label">Month units</div></div>
           <div class="stat-card"><div class="stat-card-value mono" id="stat-avg-day">0.0</div><div class="stat-card-label">Avg/day</div></div>
           <div class="stat-card"><div class="stat-card-value mono" id="stat-sober-days">0</div><div class="stat-card-label">Sober days</div></div>
+          <div class="stat-card"><div class="stat-card-value mono" id="stat-week-cals">0</div><div class="stat-card-label">Week kcal ~</div></div>
+          <div class="stat-card"><div class="stat-card-value mono" id="stat-month-cals">0</div><div class="stat-card-label">Month kcal ~</div></div>
         </div>
       </div>
     </div>
@@ -256,18 +259,18 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Log a Drink</div>
-    <input type="search" class="form-input library-search" id="f-library-search" placeholder="Search drinks library…" autocomplete="off">
-    <div id="library-results"></div>
+    <input type="search" class="form-input library-search" id="f-unified-search" placeholder="Search drinks, history &amp; library…" autocomplete="off">
+    <div id="unified-results" style="display:none"></div>
     <div id="quick-select-section">
       <div class="label">Quick Select</div>
       <div class="preset-grid" id="preset-grid"></div>
       <div id="saved-section" style="display:none">
-        <div class="label" style="margin-top:4px;">Saved</div>
+        <div class="label" style="margin-top:8px;">My Presets <span class="label-sub">— your saved drinks</span></div>
         <div class="preset-grid" id="saved-grid"></div>
       </div>
       <div id="recent-section" style="display:none">
-        <div class="label" style="margin-top:4px;">Previously Logged</div>
-        <div class="preset-grid" id="recent-grid"></div>
+        <div class="label" style="margin-top:8px;">Recent <span class="label-sub">— everything you've logged before</span></div>
+        <div id="recent-list"></div>
       </div>
     </div>
     <div class="form-group">

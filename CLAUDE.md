@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 2.9 (live)
+## Current state — Build 3.0 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -59,6 +59,16 @@ Changes made in Build 2.9:
 - **Chart x-axis label overlap fixed** — `drawNowBACChart` now computes step size from available canvas width (`cW / 42 px per label`) instead of hardcoded thresholds, ensuring labels never crowd regardless of window size
 - **Chart scroll direction fixed** — swipe right now pans back in time, swipe left returns toward present (changed sign in `_panAtStart + dx * _msPerPx`)
 - **Auto-update for all users** — `src/main.js` listens for the service worker `controllerchange` event and reloads the page; combined with `registerType: 'autoUpdate'` in vite-plugin-pwa this means every Vercel deploy automatically propagates to all open clients within one page lifecycle
+
+Changes made in Build 3.0:
+- **Y-axis labels on all charts** — all canvas charts (Now BAC, Daily BAC, Weekly bars, Monthly bars, Cals bars) now show numeric Y-axis labels on the left; PL increased from 4–6 px to 28 px to create a proper label column; gridlines labelled at 5 evenly-spaced positions; BAC charts label in ‰, bar charts label in units (1 dp) or kcal (integer)
+- **Calories in Stats** — `_buildDays` in `charts.js` now computes `cals` alongside `units` using `approxCalories`; Stats tab shows two new stat-card boxes (Week kcal, Month kcal); a new **CALS** chart tab shows 30-day calorie bars with rolling average; exported as `drawCalsChart`
+- **Edit button on Today tab** — drink entries on the Now tab now have an ✏ edit button (dispatches `at:edit-drink`) matching the existing History tab behaviour
+- **Duplicate button on History tab** — each History entry now has a ⎘ duplicate button; dispatches `at:duplicate-drink`; `openDuplicateModal(drink)` in `modal.js` opens the modal pre-filled with the drink's values at current time with `_editId = null` so it saves as a new entry
+- **Unified search in add-drink modal** — the library-only search is replaced with a single search bar ("Search drinks, history & library…") that queries log history, Quick Select presets, and the 109-entry library simultaneously; results are grouped by source ("From your history", "Quick select", "From library"); all results use the same list-row format (icon + name + vol/ABV)
+- **Modal sections renamed and clarified** — "Saved" → **My Presets** (subtitle: "your saved drinks"); "Previously Logged" → **Recent** (subtitle: "everything you've logged before")
+- **Recent section converted to list** — previously a chip grid, Recent drinks now appear as full-width list rows showing emoji, name, volume, and ABV — consistent with unified search results
+- **Vol + ABV on all chips** — Quick Select and My Presets chips now show a third line of metadata (e.g. "568ml · 4.5%") below the name so users can distinguish similar drinks at a glance
 
 ---
 
@@ -192,7 +202,7 @@ npm run preview  # preview the production build locally
 
 ---
 
-## What's planned for Build 3
+## What's planned for Build 4
 
 From `alcotrack-claude-code-handoff.md`:
 
@@ -211,10 +221,10 @@ From `alcotrack-claude-code-handoff.md`:
 ### Known tech debt
 | Item | Notes |
 |---|---|
-| ~~No PWA icons~~ | Fixed in Build 2.9 — icons in `public/icons/` |
 | BAC chart uses raw canvas | Works fine; could move to Chart.js for maintainability |
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
-| Calories are approximate | Label more clearly in UI |
+| Calories are approximate | Labelled "~" in UI; consider a tooltip explaining the Widmark-based estimate |
+| Recent list has no cap | If the log is very large, `_buildRecentList` renders every unique drink; consider capping at 30–50 |
 
 ---
 
@@ -245,7 +255,9 @@ From `alcotrack-claude-code-handoff.md`:
 | `deleteCustomDrink(id)` | `src/storage.js` | Remove a custom drink by id |
 | `openModal()` | `src/ui/modal.js` | Open the add-drink bottom sheet (new drink) |
 | `openEditModal(drink)` | `src/ui/modal.js` | Open the add-drink modal pre-filled for editing an existing entry |
-| `_onLibrarySearch()` | `src/ui/modal.js` | Filters `DRINKS_LIBRARY` on input, renders result rows, hides preset section |
-| `_selectLibraryEntry(drink)` | `src/ui/modal.js` | Pre-fills form from a library entry, resets search |
+| `openDuplicateModal(drink)` | `src/ui/modal.js` | Open the add-drink modal pre-filled from an existing entry but saves as new (current time) |
+| `_onUnifiedSearch()` | `src/ui/modal.js` | Searches log history + presets + library on input; renders grouped results; hides preset sections |
+| `_buildRecentList()` | `src/ui/modal.js` | Builds the "Recent" list of unique previously-logged drinks as full-width rows |
+| `drawCalsChart(canvas, log)` | `src/charts.js` | 30-day calorie bar chart + rolling avg for Stats CALS tab |
 | `showAuthScreen()` | `src/ui/auth-screen.js` | Show auth overlay, hide app |
 | `hideAuthScreen()` | `src/ui/auth-screen.js` | Hide auth overlay, show app |

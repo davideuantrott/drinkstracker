@@ -1,6 +1,6 @@
 import { getLog, getSettings } from '../storage.js'
-import { calcUnits } from '../bac.js'
-import { drawDailyBACChart, drawWeeklyChart, drawMonthlyChart } from '../charts.js'
+import { calcUnits, approxCalories } from '../bac.js'
+import { drawDailyBACChart, drawWeeklyChart, drawMonthlyChart, drawCalsChart } from '../charts.js'
 
 let _activeChart = 'daily'
 
@@ -16,6 +16,8 @@ export function renderStats() {
 
   const weekUnits = weekDrinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0)
   const monthUnits = monthDrinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0)
+  const weekCals = weekDrinks.reduce((s, d) => s + approxCalories(d.volumeMl, d.abv), 0)
+  const monthCals = monthDrinks.reduce((s, d) => s + approxCalories(d.volumeMl, d.abv), 0)
   const avgDay = weekUnits / 7
 
   let soberCount = 0
@@ -29,6 +31,8 @@ export function renderStats() {
   document.getElementById('stat-month-total').textContent = monthUnits.toFixed(1)
   document.getElementById('stat-avg-day').textContent = avgDay.toFixed(1)
   document.getElementById('stat-sober-days').textContent = soberCount
+  document.getElementById('stat-week-cals').textContent = Math.round(weekCals)
+  document.getElementById('stat-month-cals').textContent = Math.round(monthCals)
 
   const goal = parseFloat(settings.weeklyGoal)
   const goalPct = Math.min(100, (weekUnits / goal) * 100)
@@ -64,7 +68,9 @@ function _drawChart(log, settings) {
     drawDailyBACChart(canvas, todayDrinks, settings)
   } else if (_activeChart === 'weekly') {
     drawWeeklyChart(canvas, log)
-  } else {
+  } else if (_activeChart === 'monthly') {
     drawMonthlyChart(canvas, log)
+  } else if (_activeChart === 'cals') {
+    drawCalsChart(canvas, log)
   }
 }

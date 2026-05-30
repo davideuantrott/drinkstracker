@@ -1,4 +1,4 @@
-import { calcBACAtTime, calcUnits } from './bac.js'
+import { calcBACAtTime, calcUnits, approxCalories } from './bac.js'
 
 // ── Now-tab live BAC chart ───────────────────────────────────────────────────
 
@@ -39,7 +39,7 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
 
   const maxV = Math.max(...pts.map(p => p.v), limit * 1.3, 0.01)
 
-  const PL = 6, PR = 6, PT = 12, PB = 22
+  const PL = 28, PR = 6, PT = 12, PB = 22
   const cW = W - PL - PR
   const cH = H - PT - PB
 
@@ -48,12 +48,17 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
 
   ctx.clearRect(0, 0, W, H)
 
-  // Grid lines
+  // Grid lines + Y-axis labels
   ctx.strokeStyle = 'rgba(255,255,255,0.05)'
   ctx.lineWidth = 1
+  ctx.fillStyle = 'rgba(168,192,232,0.5)'
+  ctx.font = '9px "Roboto Mono",monospace'
+  ctx.textAlign = 'right'
   for (let i = 0; i <= 4; i++) {
     const y = PT + (cH * i) / 4
     ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
+    const v = maxV * (1 - i / 4)
+    ctx.fillText(v.toFixed(2), PL - 3, y + 3)
   }
 
   // Legal limit line
@@ -177,18 +182,24 @@ export function drawDailyBACChart(canvas, todayDrinks, settings) {
   }
 
   const maxV = Math.max(...pts.map(p => p.v), limit * 1.3, 0.01)
-  const PL = 6, PR = 6, PT = 12, PB = 22
+  const PL = 28, PR = 6, PT = 12, PB = 22
   const cW = W - PL - PR, cH = H - PT - PB
   const toX = t => PL + ((t - tStart) / (tEnd - tStart)) * cW
   const toY = v => PT + cH - (v / maxV) * cH
 
   ctx.clearRect(0, 0, W, H)
 
+  // Grid lines + Y-axis labels
   ctx.strokeStyle = 'rgba(255,255,255,0.05)'
   ctx.lineWidth = 1
+  ctx.fillStyle = 'rgba(168,192,232,0.5)'
+  ctx.font = '9px "Roboto Mono",monospace'
+  ctx.textAlign = 'right'
   for (let i = 0; i <= 4; i++) {
     const y = PT + (cH * i) / 4
     ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
+    const v = maxV * (1 - i / 4)
+    ctx.fillText(v.toFixed(2), PL - 3, y + 3)
   }
 
   const limitY = toY(limit)
@@ -287,37 +298,44 @@ function _buildDays(log, n) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i)
     const start = d.getTime()
     const end = start + 86400000
-    const units = log
-      .filter(dr => dr.timestamp >= start && dr.timestamp < end)
-      .reduce((s, dr) => s + calcUnits(dr.volumeMl, dr.abv), 0)
-    days.push({ date: d, units })
+    const dayDrinks = log.filter(dr => dr.timestamp >= start && dr.timestamp < end)
+    const units = dayDrinks.reduce((s, dr) => s + calcUnits(dr.volumeMl, dr.abv), 0)
+    const cals = dayDrinks.reduce((s, dr) => s + approxCalories(dr.volumeMl, dr.abv), 0)
+    days.push({ date: d, units, cals })
   }
   return days
 }
 
-function _drawBarChart(ctx, W, H, days, n, showDayLabels) {
-  const PL = 4, PR = 4, PT = 12, PB = 22
+function _drawBarChart(ctx, W, H, days, n, showDayLabels, mode = 'units') {
+  const PL = 28, PR = 4, PT = 12, PB = 22
   const cW = W - PL - PR, cH = H - PT - PB
 
-  const maxU = Math.max(...days.map(d => d.units), 4)
+  const getValue = d => mode === 'cals' ? d.cals : d.units
+  const maxVal = Math.max(...days.map(getValue), mode === 'cals' ? 100 : 4)
   const barSlot = cW / n
   const barW = Math.max(2, barSlot - (n > 14 ? 2 : 4))
 
   ctx.clearRect(0, 0, W, H)
 
-  // Grid
+  // Grid + Y-axis labels
   ctx.strokeStyle = 'rgba(255,255,255,0.05)'
   ctx.lineWidth = 1
+  ctx.fillStyle = 'rgba(168,192,232,0.5)'
+  ctx.font = '9px "Roboto Mono",monospace'
+  ctx.textAlign = 'right'
   for (let i = 0; i <= 4; i++) {
     const y = PT + (cH * i) / 4
     ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
+    const v = maxVal * (1 - i / 4)
+    const label = mode === 'cals' ? Math.round(v).toString() : v.toFixed(1)
+    ctx.fillText(label, PL - 3, y + 3)
   }
 
   // Bars
   days.forEach((day, i) => {
     const isToday = i === days.length - 1
     const x = PL + i * barSlot + (barSlot - barW) / 2
-    const barH = (day.units / maxU) * cH
+    const barH = (getValue(day) / maxVal) * cH
     const y = PT + cH - barH
 
     const grad = ctx.createLinearGradient(0, y, 0, PT + cH)
@@ -353,7 +371,7 @@ function _drawBarChart(ctx, W, H, days, n, showDayLabels) {
   const avgWindow = n === 7 ? 7 : 30
   const avgPts = days.map((_, i) => {
     const slice = days.slice(Math.max(0, i - avgWindow + 1), i + 1)
-    return slice.reduce((s, d) => s + d.units, 0) / slice.length
+    return slice.reduce((s, d) => s + getValue(d), 0) / slice.length
   })
 
   ctx.beginPath()
@@ -361,7 +379,7 @@ function _drawBarChart(ctx, W, H, days, n, showDayLabels) {
   ctx.lineWidth = 1.5
   avgPts.forEach((v, i) => {
     const x = PL + i * barSlot + barSlot / 2
-    const y = PT + cH - (v / maxU) * cH
+    const y = PT + cH - (v / maxVal) * cH
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
   })
   ctx.stroke()
@@ -372,6 +390,22 @@ function _drawBarChart(ctx, W, H, days, n, showDayLabels) {
   ctx.font = '9px Poppins,sans-serif'
   ctx.textAlign = 'left'
   ctx.fillText(avgWindow + '-day avg', W - PR - 42, PT + 6)
+}
+
+// ── Stats CALORIES: 30-day calorie bars ──────────────────────────────────────
+
+export function drawCalsChart(canvas, log) {
+  const ctx = canvas.getContext('2d')
+  const W = canvas.parentElement.clientWidth
+  const H = 180
+  canvas.width = W * devicePixelRatio
+  canvas.height = H * devicePixelRatio
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
+  ctx.scale(devicePixelRatio, devicePixelRatio)
+
+  const days = _buildDays(log, 30)
+  _drawBarChart(ctx, W, H, days, 30, false, 'cals')
 }
 
 // ── Legacy export (keeps old stats.js working during transition) ──────────────
