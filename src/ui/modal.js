@@ -118,6 +118,7 @@ export function _buildRecentList() {
     if (!seen.has(key)) {
       seen.add(key)
       recents.push(d)
+      if (recents.length >= 10) break
     }
   }
 
@@ -176,6 +177,7 @@ function _onUnifiedSearch() {
   }
 
   quickSelectEl.style.display = 'none'
+  document.querySelector('.modal-section-divider').style.display = 'none'
   resultsEl.style.display = 'block'
 
   const log = getLog()
@@ -271,6 +273,7 @@ function _hideUnifiedResults() {
   document.getElementById('unified-results').innerHTML = ''
   document.getElementById('unified-results').style.display = 'none'
   document.getElementById('quick-select-section').style.display = ''
+  document.querySelector('.modal-section-divider').style.display = ''
 }
 
 export function openModal() {

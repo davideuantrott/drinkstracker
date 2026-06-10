@@ -261,18 +261,6 @@
     <div class="modal-title">Log a Drink</div>
     <input type="search" class="form-input library-search" id="f-unified-search" placeholder="Search drinks, history &amp; library…" autocomplete="off">
     <div id="unified-results" style="display:none"></div>
-    <div id="quick-select-section">
-      <div class="label">Quick Select</div>
-      <div class="preset-grid" id="preset-grid"></div>
-      <div id="saved-section" style="display:none">
-        <div class="label" style="margin-top:8px;">My Presets <span class="label-sub">— your saved drinks</span></div>
-        <div class="preset-grid" id="saved-grid"></div>
-      </div>
-      <div id="recent-section" style="display:none">
-        <div class="label" style="margin-top:8px;">Recent <span class="label-sub">— everything you've logged before</span></div>
-        <div id="recent-list"></div>
-      </div>
-    </div>
     <div class="form-group">
       <label class="form-label" for="f-name">Drink Name</label>
       <input type="text" class="form-input" id="f-name" placeholder="e.g. Pint of lager">
@@ -324,6 +312,19 @@
     </div>
     <button class="btn-primary" id="btn-add-drink">Log Drink</button>
     <button class="btn-ghost" id="btn-cancel-modal">Cancel</button>
+    <div class="modal-section-divider"><span>or choose from saved</span></div>
+    <div id="quick-select-section">
+      <div class="label">Quick Select</div>
+      <div class="preset-grid" id="preset-grid"></div>
+      <div id="saved-section" style="display:none">
+        <div class="label" style="margin-top:8px;">My Presets <span class="label-sub">— your saved drinks</span></div>
+        <div class="preset-grid" id="saved-grid"></div>
+      </div>
+      <div id="recent-section" style="display:none">
+        <div class="label" style="margin-top:8px;">Recent <span class="label-sub">— everything you've logged before</span></div>
+        <div id="recent-list"></div>
+      </div>
+    </div>
   </div>
 </div>
 

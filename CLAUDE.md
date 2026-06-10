@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 3.0 (live)
+## Current state — Build 3.1 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -69,6 +69,12 @@ Changes made in Build 3.0:
 - **Modal sections renamed and clarified** — "Saved" → **My Presets** (subtitle: "your saved drinks"); "Previously Logged" → **Recent** (subtitle: "everything you've logged before")
 - **Recent section converted to list** — previously a chip grid, Recent drinks now appear as full-width list rows showing emoji, name, volume, and ABV — consistent with unified search results
 - **Vol + ABV on all chips** — Quick Select and My Presets chips now show a third line of metadata (e.g. "568ml · 4.5%") below the name so users can distinguish similar drinks at a glance
+
+Changes made in Build 3.1:
+- **Form moved to top of add-drink modal** — form fields (name, icon, vol/ABV, cost, date/time) and the Log Drink / Cancel buttons are now positioned above the preset/history sections in `index.html`; the form is visible immediately on open without any scrolling
+- **Recent list capped at 10** — `_buildRecentList()` in `src/ui/modal.js` breaks after collecting 10 unique entries (deduped by name+vol+abv); the unified search bar at the top already searches full history so longer history is still accessible via search
+- **Recent list scroll-contained** — `#recent-list` in `src/style.css` gets `max-height: 220px; overflow-y: auto` so the list scrolls within its own box (~3–4 visible rows) rather than extending the page
+- **"or choose from saved" divider** — a `.modal-section-divider` element with flanking hairlines separates the form from the Quick Select / My Presets / Recent sections; hidden automatically when unified search is active
 
 ---
 

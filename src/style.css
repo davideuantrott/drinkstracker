@@ -353,7 +353,7 @@ html, body {
 .unified-no-results { font-size: 13px; color: var(--muted); text-align: center; padding: 10px 0 6px; }
 
 /* Recent drinks list */
-#recent-list { margin-bottom: 8px; }
+#recent-list { margin-bottom: 8px; max-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .recent-result {
   display: flex; align-items: center; gap: 10px;
   width: 100%; background: var(--surface2); border: 1px solid var(--border);
@@ -376,6 +376,18 @@ html, body {
   width: 100%; background: none; border: 1px solid var(--border); border-radius: 14px;
   padding: 14px; color: var(--muted); font-family: 'Poppins', sans-serif;
   font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+}
+
+/* Modal section divider */
+.modal-section-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 20px 0 16px;
+  color: var(--muted); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.modal-section-divider::before,
+.modal-section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--surface2);
 }
 
 /* ---- LOG PAGE ---- */
