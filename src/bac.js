@@ -31,6 +31,59 @@ export function calcBACAtTime(drinks, atTime, settings) {
   return _poolBAC(drinks.filter(d => d.timestamp <= atTime), atTime, r, weightKg)
 }
 
+// Exact knots of the BAC curve over [tStart, tEnd].
+// The pool model is piecewise linear — a vertical step at each drink, then a
+// constant 0.15‰/h decay — so a handful of knots reproduces it exactly. Fixed
+// sampling would clip every peak by up to (interval × 0.15‰/h), which is what
+// made the Now chart disagree with the BAC readout above it.
+export function bacCurvePoints(drinks, tStart, tEnd, settings) {
+  const { r, weightKg } = _bacParams(settings)
+  const sorted = drinks
+    .filter(d => d.timestamp <= tEnd)
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  const knots = []
+  let pool = 0
+  let prevMs = sorted.length ? sorted[0].timestamp : tStart
+  knots.push({ t: prevMs, v: 0 })
+
+  for (const d of sorted) {
+    const before = Math.max(0, pool - 0.15 * (d.timestamp - prevMs) / 3600000)
+    const zeroMs = prevMs + (pool / 0.15) * 3600000
+    if (pool > 0 && zeroMs < d.timestamp) knots.push({ t: zeroMs, v: 0 })
+    knots.push({ t: d.timestamp, v: before })
+    pool = before + (d.volumeMl * d.abv / 100) * 0.789 / (weightKg * r)
+    knots.push({ t: d.timestamp, v: pool })
+    prevMs = d.timestamp
+  }
+
+  const zeroMs = prevMs + (pool / 0.15) * 3600000
+  if (pool > 0 && zeroMs < tEnd) knots.push({ t: zeroMs, v: 0 })
+  knots.push({ t: tEnd, v: Math.max(0, pool - 0.15 * (tEnd - prevMs) / 3600000) })
+  if (knots[0].t > tStart) knots.unshift({ t: tStart, v: 0 })
+
+  return _clipSeries(knots, tStart, tEnd)
+}
+
+// Trim a knot list to the visible window, interpolating a knot at tStart so the
+// curve enters the chart at the right height.
+function _clipSeries(knots, tStart, tEnd) {
+  const out = []
+  for (let i = 0; i < knots.length; i++) {
+    const p = knots[i]
+    if (p.t > tEnd) break
+    if (p.t < tStart) continue
+    const prev = knots[i - 1]
+    if (prev && prev.t < tStart) {
+      const f = (tStart - prev.t) / (p.t - prev.t)
+      out.push({ t: tStart, v: prev.v + (p.v - prev.v) * f })
+    }
+    out.push(p)
+  }
+  if (out.length < 2) return [{ t: tStart, v: 0 }, { t: tEnd, v: 0 }]
+  return out
+}
+
 export function calcUnits(volumeMl, abv) {
   return (volumeMl * abv) / 1000
 }

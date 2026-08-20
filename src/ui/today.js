@@ -20,8 +20,9 @@ export function renderToday() {
   const start = new Date(); start.setHours(0, 0, 0, 0)
   const todayDrinks = log.filter(d => d.timestamp >= start.getTime())
 
-  // BAC drinks: look back 24 h so pre-midnight drinking carries over
-  const bacCutoff = Date.now() - 24 * 3600000
+  // BAC drinks: look back 4 days so pre-midnight drinking carries over and the
+  // hero number is computed from exactly the same set the chart draws
+  const bacCutoff = Date.now() - 4 * 24 * 3600000
   const bacDrinks = log.filter(d => d.timestamp >= bacCutoff)
 
   const bac = calcBACPermille(bacDrinks, settings)
@@ -59,11 +60,10 @@ export function renderToday() {
 
   document.getElementById('bac-sober-time').textContent = getSoberTime(bac)
 
-  // Draw live BAC chart; pass 4-day window so panning back shows past drinks
+  // Draw live BAC chart; the 4-day drink set lets panning reach past days
   const chartCanvas = document.getElementById('now-bac-chart')
   if (chartCanvas.parentElement.clientWidth > 0) {
-    const chartDrinks = log.filter(d => d.timestamp >= Date.now() - 4 * 24 * 3600000)
-    _msPerPx = drawNowBACChart(chartCanvas, chartDrinks, settings, _panOffsetMs)
+    _msPerPx = drawNowBACChart(chartCanvas, bacDrinks, settings, _panOffsetMs)
     if (!_panSetup) {
       _panSetup = true
       _setupChartPan(chartCanvas)

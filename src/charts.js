@@ -1,4 +1,18 @@
-import { calcBACAtTime, calcUnits, approxCalories } from './bac.js'
+import { calcBACAtTime, bacCurvePoints, calcUnits, approxCalories, formatBAC } from './bac.js'
+
+// ── Shared helpers ───────────────────────────────────────────────────────────
+
+// Gridline labels top-to-bottom, in whichever unit the user reads BAC in.
+function _yAxisLabels(maxV, bacUnit) {
+  return Array.from({ length: 5 }, (_, i) => formatBAC(maxV * (1 - i / 4), bacUnit))
+}
+
+// Left gutter wide enough for the widest label — '%' labels ('0.133') need more
+// room than permille ('1.04'), and a fixed gutter clipped them.
+function _labelGutter(ctx, labels) {
+  ctx.font = '9px "Roboto Mono",monospace'
+  return Math.ceil(Math.max(...labels.map(l => ctx.measureText(l).width))) + 7
+}
 
 // ── Now-tab live BAC chart ───────────────────────────────────────────────────
 
@@ -18,28 +32,22 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   // Clamp pan to 3-day max
   panOffsetMs = Math.max(0, Math.min(panOffsetMs, 3 * 24 * 3600000))
 
-  const firstTs = drinks.length
-    ? drinks.reduce((m, d) => Math.min(m, d.timestamp), Infinity)
-    : now
   const currentBAC = calcBACAtTime(drinks, now, settings)
   const soberMs = currentBAC > 0 ? now + (currentBAC / 0.15) * 3600000 : now
 
-  // Natural window then shift backwards by panOffsetMs
-  const naturalTStart = Math.min(firstTs, now - 4 * 3600000)
+  // Natural window is the last 12 h (plus whatever it takes to reach sober);
+  // older drinking is reached by panning, not by stretching this view.
+  const naturalTStart = now - 12 * 3600000
   const naturalTEnd = Math.max(soberMs + 20 * 60000, now + 60 * 60000)
   const tStart = naturalTStart - panOffsetMs
   const tEnd = naturalTEnd - panOffsetMs
 
-  const N = 120
-  const pts = []
-  for (let i = 0; i <= N; i++) {
-    const t = tStart + (tEnd - tStart) * (i / N)
-    pts.push({ t, v: calcBACAtTime(drinks, t, settings) })
-  }
+  const pts = bacCurvePoints(drinks, tStart, tEnd, settings)
 
   const maxV = Math.max(...pts.map(p => p.v), limit * 1.3, 0.01)
+  const yLabels = _yAxisLabels(maxV, settings.bacUnit)
 
-  const PL = 28, PR = 6, PT = 12, PB = 22
+  const PL = _labelGutter(ctx, yLabels), PR = 6, PT = 12, PB = 22
   const cW = W - PL - PR
   const cH = H - PT - PB
 
@@ -57,8 +65,7 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   for (let i = 0; i <= 4; i++) {
     const y = PT + (cH * i) / 4
     ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
-    const v = maxV * (1 - i / 4)
-    ctx.fillText(v.toFixed(2), PL - 3, y + 3)
+    ctx.fillText(yLabels[i], PL - 3, y + 3)
   }
 
   // Legal limit line
@@ -72,7 +79,7 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   ctx.fillStyle = 'rgba(251,191,36,0.75)'
   ctx.font = '700 9px Poppins,sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText('LIMIT', PL + 4, limitY - 3)
+  ctx.fillText('LIMIT ' + formatBAC(limit, settings.bacUnit), PL + 4, limitY - 3)
 
   // Colored fill — vertical gradient keyed to BAC level
   const limitFrac = Math.max(0, Math.min(1, 1 - limit / maxV))
@@ -86,7 +93,7 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   ctx.beginPath()
   ctx.moveTo(toX(pts[0].t), PT + cH)
   pts.forEach(p => ctx.lineTo(toX(p.t), toY(p.v)))
-  ctx.lineTo(toX(pts[N].t), PT + cH)
+  ctx.lineTo(toX(pts[pts.length - 1].t), PT + cH)
   ctx.closePath()
   ctx.fillStyle = grad
   ctx.fill()
@@ -174,15 +181,11 @@ export function drawDailyBACChart(canvas, todayDrinks, settings) {
   const tStart = dayStart.getTime()
   const tEnd = now + 2 * 3600000
 
-  const N = 120
-  const pts = []
-  for (let i = 0; i <= N; i++) {
-    const t = tStart + (tEnd - tStart) * (i / N)
-    pts.push({ t, v: calcBACAtTime(todayDrinks, t, settings) })
-  }
+  const pts = bacCurvePoints(todayDrinks, tStart, tEnd, settings)
 
   const maxV = Math.max(...pts.map(p => p.v), limit * 1.3, 0.01)
-  const PL = 28, PR = 6, PT = 12, PB = 22
+  const yLabels = _yAxisLabels(maxV, settings.bacUnit)
+  const PL = _labelGutter(ctx, yLabels), PR = 6, PT = 12, PB = 22
   const cW = W - PL - PR, cH = H - PT - PB
   const toX = t => PL + ((t - tStart) / (tEnd - tStart)) * cW
   const toY = v => PT + cH - (v / maxV) * cH
@@ -198,8 +201,7 @@ export function drawDailyBACChart(canvas, todayDrinks, settings) {
   for (let i = 0; i <= 4; i++) {
     const y = PT + (cH * i) / 4
     ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke()
-    const v = maxV * (1 - i / 4)
-    ctx.fillText(v.toFixed(2), PL - 3, y + 3)
+    ctx.fillText(yLabels[i], PL - 3, y + 3)
   }
 
   const limitY = toY(limit)
@@ -212,7 +214,7 @@ export function drawDailyBACChart(canvas, todayDrinks, settings) {
   ctx.fillStyle = 'rgba(251,191,36,0.75)'
   ctx.font = '700 9px Poppins,sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText('LIMIT', PL + 4, limitY - 3)
+  ctx.fillText('LIMIT ' + formatBAC(limit, settings.bacUnit), PL + 4, limitY - 3)
 
   const limitFrac = Math.max(0, Math.min(1, 1 - limit / maxV))
   const halfFrac  = Math.max(0, Math.min(1, 1 - (limit * 0.5) / maxV))
@@ -225,7 +227,7 @@ export function drawDailyBACChart(canvas, todayDrinks, settings) {
   ctx.beginPath()
   ctx.moveTo(toX(pts[0].t), PT + cH)
   pts.forEach(p => ctx.lineTo(toX(p.t), toY(p.v)))
-  ctx.lineTo(toX(pts[N].t), PT + cH)
+  ctx.lineTo(toX(pts[pts.length - 1].t), PT + cH)
   ctx.closePath()
   ctx.fillStyle = grad
   ctx.fill()

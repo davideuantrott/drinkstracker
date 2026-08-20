@@ -76,6 +76,13 @@ Changes made in Build 3.1:
 - **Recent list scroll-contained** — `#recent-list` in `src/style.css` gets `max-height: 220px; overflow-y: auto` so the list scrolls within its own box (~3–4 visible rows) rather than extending the page
 - **"or choose from saved" divider** — a `.modal-section-divider` element with flanking hairlines separates the form from the Quick Select / My Presets / Recent sections; hidden automatically when unified search is active
 
+Changes made in Build 3.2:
+- **BAC chart / readout discrepancy fixed** — the Now chart could draw the curve below the legal-limit line while the hero readout above it said "Over legal limit". Three causes, all fixed:
+  - **Exact curve knots instead of fixed sampling** — both BAC charts sampled 120 evenly-spaced points across their window. On the Now chart that window stretched back to the oldest drink in the 4-day pan buffer, so each sample covered ~50 min and every peak was clipped by up to 50 min × 0.15‰/h (~0.13‰). `bacCurvePoints(drinks, tStart, tEnd, settings)` in `src/bac.js` now returns the exact knots of the piecewise-linear pool model (a vertical step at each drink, constant decay in between, plus zero-crossings), so the drawn value at the now-marker equals `calcBACPermille` exactly
+  - **Default window is now the last 12 h** — `drawNowBACChart` no longer stretches `tStart` back to the first drink in the buffer; older drinking is reached by panning (still up to 3 days), which is what the pan gesture was for
+  - **Chart labels follow the BAC unit setting** — Y-axis gridline labels and the LIMIT line ran through `toFixed(2)` (raw permille) while the hero showed `% BAC`; both charts now format via `formatBAC(v, settings.bacUnit)`, the limit line is labelled with its value ("LIMIT 0.080"), and the left gutter is measured from the widest label instead of a fixed 28 px that clipped `%` labels
+- **Hero and chart share one drink set** — `renderToday()` computed the hero BAC from a 24 h lookback but drew the chart from a 4-day one; both now use the same 4-day list, so the number and the curve can never diverge
+
 ---
 
 ## Project structure
@@ -240,6 +247,7 @@ From `alcotrack-claude-code-handoff.md`:
 |---|---|---|
 | `calcBACPermille(drinks, settings)` | `src/bac.js` | Widmark formula, returns current BAC in permille |
 | `calcBACAtTime(drinks, t, settings)` | `src/bac.js` | BAC at a specific timestamp (used for chart) |
+| `bacCurvePoints(drinks, tStart, tEnd, settings)` | `src/bac.js` | Exact knots of the BAC curve over a window — used by both BAC charts so peaks are never clipped by sampling |
 | `calcUnits(volumeMl, abv)` | `src/bac.js` | UK units = `(vol × abv) / 1000` |
 | `initStorage()` | `src/storage.js` | Load from localStorage, migrate old IDs to UUIDs |
 | `addLogEntry(entry)` | `src/storage.js` | Write to localStorage + queue Supabase upsert |
