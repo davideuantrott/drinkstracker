@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 3.1 (live)
+## Current state — Build 3.2 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -99,20 +99,23 @@ drinkstracker/
 │   └── fetch-off-drinks.mjs ← one-off Node 18+ script: queries Open Food Facts for UK alcohol products and merges into drinks-library.json
 ├── supabase/
 │   ├── 001_initial.sql     ← drink_log + user_settings tables + RLS
-│   └── 002_user_customs.sql ← user_customs table + RLS (run after 001)
+│   ├── 002_user_customs.sql ← user_customs table + RLS (run after 001)
+│   └── 003_drink_icon.sql  ← adds drink_log.icon so emoji sync cross-device (run after 002)
+├── public/
+│   └── icons/              ← PWA icons (android/192, android/512, ios/180)
 └── src/
     ├── main.js             ← entry point; boots app, handles auth state
     ├── style.css           ← all CSS (design tokens, layout, every component)
     ├── bac.js              ← pure BAC calculation functions (Widmark formula)
     ├── auth.js             ← Supabase client + auth helpers
     ├── storage.js          ← state manager: localStorage + Supabase sync layer
-    ├── charts.js           ← canvas charts: now BAC, daily BAC, weekly/monthly bars
+    ├── charts.js           ← canvas charts: now BAC, daily BAC, weekly/monthly/cals bars
     ├── presets.js          ← PRESETS array + getPresetIcon() helper
     ├── drinks-library.json ← 109-entry curated UK retail drinks (name, volumeMl, abv, category, ean)
     └── ui/
         ├── today.js        ← renders Now tab (BAC hero, live chart, quick-add, drink log)
         ├── log.js          ← renders History tab (grouped by day)
-        ├── stats.js        ← renders Stats tab (DAILY/WEEKLY/MONTHLY chart tabs)
+        ├── stats.js        ← renders Stats tab (DAILY/WEEKLY/MONTHLY/CALS chart tabs)
         ├── settings.js     ← renders Profile tab, binds all settings inputs
         ├── modal.js        ← add-drink modal + migration modal logic
         └── auth-screen.js  ← auth UI (Google OAuth + email/password)
@@ -176,7 +179,8 @@ Fonts: `Poppins` (UI/headings, 400–800) + `Roboto Mono` (numeric values, 300�
   name: "Pint Lager",
   volumeMl: 568,
   abv: 4.5,
-  cost: 5.00                // 0 if not entered
+  cost: 5.00,               // 0 if not entered
+  icon: "🍺"                // per-entry emoji (Build 2.6); needs supabase/003 to sync
 }
 ```
 
@@ -189,7 +193,7 @@ Fonts: `Poppins` (UI/headings, 400–800) + `Roboto Mono` (numeric values, 300�
 | `at-migrated` | `"true"` after first migration |
 | `at-customs` | JSON array of user-saved custom drink presets |
 
-**Supabase tables:** `drink_log`, `user_settings`, and `user_customs` — see `supabase/001_initial.sql` and `supabase/002_user_customs.sql`. All three have Row Level Security enforced; users can only see/write their own rows.
+**Supabase tables:** `drink_log`, `user_settings`, and `user_customs` — see `supabase/001_initial.sql`, `supabase/002_user_customs.sql`, and `supabase/003_drink_icon.sql`. All three have Row Level Security enforced; users can only see/write their own rows.
 
 ---
 
@@ -234,10 +238,10 @@ From `alcotrack-claude-code-handoff.md`:
 ### Known tech debt
 | Item | Notes |
 |---|---|
-| BAC chart uses raw canvas | Works fine; could move to Chart.js for maintainability |
+| BAC charts use raw canvas | Works fine; could move to Chart.js for maintainability |
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
 | Calories are approximate | Labelled "~" in UI; consider a tooltip explaining the Widmark-based estimate |
-| Recent list has no cap | If the log is very large, `_buildRecentList` renders every unique drink; consider capping at 30–50 |
+| Chart curves assume the pool model | `bacCurvePoints` hardcodes the piecewise-linear shape of `_poolBAC`; a model change (e.g. gradual absorption) means updating both |
 
 ---
 
@@ -257,7 +261,7 @@ From `alcotrack-claude-code-handoff.md`:
 | `migrateLocalToCloud()` | `src/storage.js` | Push all local entries to Supabase (first-login migration) |
 | `processQueue()` | `src/storage.js` | Flush pending offline sync operations |
 | `renderToday()` | `src/ui/today.js` | Re-render Now tab (BAC, live chart, quick-add, drink list) |
-| `drawNowBACChart(canvas, drinks, settings, panOffsetMs)` | `src/charts.js` | Live BAC chart for Now tab; panOffsetMs shifts window back in time (0–3 days); returns msPerPx for touch handler |
+| `drawNowBACChart(canvas, drinks, settings, panOffsetMs)` | `src/charts.js` | Live BAC chart for Now tab; shows the last 12 h by default, panOffsetMs shifts that window back in time (0–3 days); returns msPerPx for touch handler |
 | `drawDailyBACChart(canvas, drinks, settings)` | `src/charts.js` | BAC trend chart for Stats DAILY tab |
 | `drawWeeklyChart(canvas, log)` | `src/charts.js` | 7-day bar chart + rolling avg for Stats WEEKLY tab |
 | `drawMonthlyChart(canvas, log)` | `src/charts.js` | 30-day bar chart + rolling avg for Stats MONTHLY tab |
