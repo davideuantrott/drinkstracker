@@ -1,4 +1,4 @@
-import { calcBACAtTime, bacCurvePoints, calcUnits, approxCalories, formatBAC } from './bac.js'
+import { calcBACAtTime, bacCurvePoints, soberAt, calcUnits, approxCalories, formatBAC } from './bac.js'
 
 // ── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   panOffsetMs = Math.max(0, Math.min(panOffsetMs, 3 * 24 * 3600000))
 
   const currentBAC = calcBACAtTime(drinks, now, settings)
-  const soberMs = currentBAC > 0 ? now + (currentBAC / 0.15) * 3600000 : now
+  const soberMs = soberAt(drinks, settings, now) || now
 
   // Natural window is the last 12 h (plus whatever it takes to reach sober);
   // older drinking is reached by panning, not by stretching this view.

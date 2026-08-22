@@ -1,86 +1,158 @@
+// ── BAC model ────────────────────────────────────────────────────────────────
+//
+// Deliberately conservative: every parameter below is set at the cautious end of
+// its published range, so the number shown is a high estimate rather than a
+// central one. Stacked, they read roughly 20% higher than a textbook Widmark
+// calculation, and alcohol clears roughly 50% slower.
+//
+//   r (Widmark factor)  Widmark's means are 0.68 male / 0.55 female with SDs of
+//                       0.085 / 0.055. We use one SD *below* the mean: a lower r
+//                       means a smaller volume of distribution, so a higher BAC
+//                       for the same drink. Covers ~84% of people.
+//   blood density       Widmark's r was derived with BAC per unit mass of blood
+//                       (g/kg). Legal limits are per unit volume (mg/100 ml), so
+//                       the conversion needs blood's specific gravity. 1.055 is
+//                       the high end of the quoted range.
+//   elimination         Population range is ~0.10–0.20‰/h. We use the slow end,
+//                       which both holds BAC higher during a session and pushes
+//                       the sober estimate later.
+//   absorption          A drink is logged at the last sip, so some absorption has
+//                       already happened — but not all. Each drink ramps in
+//                       linearly over 30 min rather than landing instantly.
+//
+// None of this models food, drinking speed, medication, illness or tolerance,
+// and individual variation remains large. The output is an estimate, never a
+// fitness-to-drive decision.
+
+const R_FACTOR = { male: 0.68 - 0.085, female: 0.55 - 0.055 }
+const BLOOD_DENSITY = 1.055
+const ELIM_PER_H = 0.10
+const ELIM_PER_MS = ELIM_PER_H / 3600000
+export const ABSORB_MS = 30 * 60000
+
 function _bacParams(settings) {
-  const r = settings.gender === 'female' ? 0.55 : 0.68
+  const r = R_FACTOR[settings.gender === 'female' ? 'female' : 'male']
   const weightKg = settings.weightUnit === 'lb'
     ? parseFloat(settings.weightKg) * 0.453592
     : parseFloat(settings.weightKg)
   return { r, weightKg }
 }
 
-// Pool model: liver metabolises at 0.15‰/h from the combined pool, not per-drink.
-// Process drinks in chronological order, drain the pool between each, then drain to target time.
-function _poolBAC(drinks, targetMs, r, weightKg) {
-  if (drinks.length === 0) return 0
-  const sorted = [...drinks].sort((a, b) => a.timestamp - b.timestamp)
-  let pool = 0
-  let prevMs = sorted[0].timestamp
-  for (const d of sorted) {
-    pool = Math.max(0, pool - 0.15 * (d.timestamp - prevMs) / 3600000)
-    pool += (d.volumeMl * d.abv / 100) * 0.789 / (weightKg * r)
-    prevMs = d.timestamp
+// Each drink becomes a dose absorbed linearly between t0 and t1.
+function _doses(drinks, settings) {
+  const { r, weightKg } = _bacParams(settings)
+  if (!(weightKg > 0)) return []
+  return drinks
+    .filter(d => d.volumeMl > 0 && d.abv > 0)
+    .map(d => ({
+      t0: d.timestamp,
+      t1: d.timestamp + ABSORB_MS,
+      dose: (d.volumeMl * d.abv / 100) * 0.789 * BLOOD_DENSITY / (weightKg * r)
+    }))
+    .sort((a, b) => a.t0 - b.t0)
+}
+
+// The exact knots of the BAC curve: absorption ramps in, elimination drains at a
+// constant rate whenever there is anything left. Both are piecewise linear, so
+// the whole curve is described by a handful of points — no sampling, no clipped
+// peaks. Everything else in this module reads off this one curve.
+function _curve(drinks, settings) {
+  const doses = _doses(drinks, settings)
+  if (!doses.length) return []
+
+  const bounds = [...new Set(doses.flatMap(d => [d.t0, d.t1]))].sort((a, b) => a - b)
+  const knots = [{ t: bounds[0], v: 0 }]
+  let v = 0
+
+  for (let i = 0; i < bounds.length - 1; i++) {
+    const t = bounds[i], tNext = bounds[i + 1]
+    // Breakpoints sit at every ramp start and end, so within this interval each
+    // dose is either absorbing throughout or not at all.
+    let inflow = 0
+    for (const d of doses) if (d.t0 <= t && d.t1 >= tNext) inflow += d.dose / (d.t1 - d.t0)
+
+    const outflow = (v > 0 || inflow > 0) ? ELIM_PER_MS : 0
+    const slope = inflow - outflow
+    let next = v + slope * (tNext - t)
+
+    if (next < 0) {
+      if (v > 0) knots.push({ t: t + v / -slope, v: 0 })  // hit zero part-way through
+      next = 0
+    }
+    knots.push({ t: tNext, v: next })
+    v = next
   }
-  return Math.max(0, pool - 0.15 * (targetMs - prevMs) / 3600000)
+
+  if (v > 0) knots.push({ t: bounds[bounds.length - 1] + v / ELIM_PER_MS, v: 0 })
+  return knots
+}
+
+function _evalCurve(knots, t) {
+  if (!knots.length || t <= knots[0].t) return 0
+  const last = knots[knots.length - 1]
+  if (t >= last.t) return last.v
+  for (let i = 1; i < knots.length; i++) {
+    const a = knots[i - 1], b = knots[i]
+    if (t <= b.t) {
+      const span = b.t - a.t
+      return span === 0 ? b.v : a.v + (b.v - a.v) * ((t - a.t) / span)
+    }
+  }
+  return last.v
 }
 
 export function calcBACPermille(drinks, settings) {
-  const { r, weightKg } = _bacParams(settings)
-  return _poolBAC(drinks, Date.now(), r, weightKg)
+  return _evalCurve(_curve(drinks, settings), Date.now())
 }
 
 export function calcBACAtTime(drinks, atTime, settings) {
-  const { r, weightKg } = _bacParams(settings)
-  return _poolBAC(drinks.filter(d => d.timestamp <= atTime), atTime, r, weightKg)
+  return _evalCurve(_curve(drinks, settings), atTime)
 }
 
-// Exact knots of the BAC curve over [tStart, tEnd].
-// The pool model is piecewise linear — a vertical step at each drink, then a
-// constant 0.15‰/h decay — so a handful of knots reproduces it exactly. Fixed
-// sampling would clip every peak by up to (interval × 0.15‰/h), which is what
-// made the Now chart disagree with the BAC readout above it.
-export function bacCurvePoints(drinks, tStart, tEnd, settings) {
-  const { r, weightKg } = _bacParams(settings)
-  const sorted = drinks
-    .filter(d => d.timestamp <= tEnd)
-    .sort((a, b) => a.timestamp - b.timestamp)
-
-  const knots = []
-  let pool = 0
-  let prevMs = sorted.length ? sorted[0].timestamp : tStart
-  knots.push({ t: prevMs, v: 0 })
-
-  for (const d of sorted) {
-    const before = Math.max(0, pool - 0.15 * (d.timestamp - prevMs) / 3600000)
-    const zeroMs = prevMs + (pool / 0.15) * 3600000
-    if (pool > 0 && zeroMs < d.timestamp) knots.push({ t: zeroMs, v: 0 })
-    knots.push({ t: d.timestamp, v: before })
-    pool = before + (d.volumeMl * d.abv / 100) * 0.789 / (weightKg * r)
-    knots.push({ t: d.timestamp, v: pool })
-    prevMs = d.timestamp
-  }
-
-  const zeroMs = prevMs + (pool / 0.15) * 3600000
-  if (pool > 0 && zeroMs < tEnd) knots.push({ t: zeroMs, v: 0 })
-  knots.push({ t: tEnd, v: Math.max(0, pool - 0.15 * (tEnd - prevMs) / 3600000) })
-  if (knots[0].t > tStart) knots.unshift({ t: tStart, v: 0 })
-
-  return _clipSeries(knots, tStart, tEnd)
+// Highest BAC still to come — a drink logged minutes ago is only part absorbed,
+// so the current reading can be well below where it is heading.
+export function peakAhead(drinks, settings, fromT = Date.now()) {
+  const knots = _curve(drinks, settings)
+  let best = { t: fromT, v: _evalCurve(knots, fromT) }
+  for (const k of knots) if (k.t > fromT && k.v > best.v) best = { t: k.t, v: k.v }
+  return best
 }
 
-// Trim a knot list to the visible window, interpolating a knot at tStart so the
-// curve enters the chart at the right height.
-function _clipSeries(knots, tStart, tEnd) {
-  const out = []
-  for (let i = 0; i < knots.length; i++) {
-    const p = knots[i]
-    if (p.t > tEnd) break
-    if (p.t < tStart) continue
-    const prev = knots[i - 1]
-    if (prev && prev.t < tStart) {
-      const f = (tStart - prev.t) / (p.t - prev.t)
-      out.push({ t: tStart, v: prev.v + (p.v - prev.v) * f })
+// When the curve drops to zero for good (null if it already has).
+export function soberAt(drinks, settings, fromT = Date.now()) {
+  const knots = _curve(drinks, settings)
+  if (!knots.length) return null
+  const last = knots[knots.length - 1]
+  return last.t > fromT && _evalCurve(knots, fromT) > 0 ? last.t : null
+}
+
+// When the curve drops below `limit` for good (null if it is already below and
+// staying there). Uses the last crossing, so a pending peak is accounted for.
+export function belowLimitAt(drinks, settings, limit, fromT = Date.now()) {
+  const knots = _curve(drinks, settings)
+  if (!knots.length) return null
+  let crossing = null
+  let prev = { t: fromT, v: _evalCurve(knots, fromT) }
+  for (const k of knots) {
+    if (k.t <= fromT) continue
+    // Only a downward crossing counts, and a later one supersedes an earlier
+    // one — so a peak still to come pushes the answer out rather than being
+    // missed.
+    if (prev.v > limit && k.v <= limit) {
+      crossing = prev.t + (k.t - prev.t) * ((prev.v - limit) / (prev.v - k.v))
     }
-    out.push(p)
+    prev = k
   }
-  if (out.length < 2) return [{ t: tStart, v: 0 }, { t: tEnd, v: 0 }]
+  return crossing
+}
+
+// Knots of the curve clipped to [tStart, tEnd], with interpolated endpoints so a
+// chart can draw the window exactly.
+export function bacCurvePoints(drinks, tStart, tEnd, settings) {
+  const knots = _curve(drinks, settings)
+  const out = [{ t: tStart, v: _evalCurve(knots, tStart) }]
+  for (const k of knots) if (k.t > tStart && k.t < tEnd) out.push(k)
+  out.push({ t: tEnd, v: _evalCurve(knots, tEnd) })
   return out
 }
 
@@ -115,10 +187,10 @@ export function getBACColor(permille, legalLimit) {
   return 'var(--red)'
 }
 
-export function getSoberTime(permille) {
-  if (permille <= 0) return ''
-  const hrs = permille / 0.15
-  const h = Math.floor(hrs)
-  const m = Math.round((hrs - h) * 60)
-  return `Sober in ~${h > 0 ? h + 'h ' : ''}${m}m`
+export function formatDuration(ms) {
+  const mins = Math.max(0, Math.round(ms / 60000))
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  if (h === 0) return `${m}m`
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
 }

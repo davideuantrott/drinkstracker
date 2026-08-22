@@ -1,5 +1,5 @@
 import { getLog, getSettings, addLogEntry, deleteLogEntry } from '../storage.js'
-import { calcBACPermille, calcUnits, approxCalories, formatBAC, bacUnitLabel, getSoberTime } from '../bac.js'
+import { calcBACPermille, peakAhead, soberAt, belowLimitAt, calcUnits, approxCalories, formatBAC, bacUnitLabel, formatDuration } from '../bac.js'
 import { getPresetIcon } from '../presets.js'
 import { drawNowBACChart } from '../charts.js'
 
@@ -26,6 +26,11 @@ export function renderToday() {
   const bacDrinks = log.filter(d => d.timestamp >= bacCutoff)
 
   const bac = calcBACPermille(bacDrinks, settings)
+  // A drink logged minutes ago is still absorbing, so the current reading can be
+  // well below where it is heading — the verdict has to use the pending peak.
+  const peak = peakAhead(bacDrinks, settings)
+  const rising = peak.v > bac + 0.005
+  const verdict = Math.max(bac, peak.v)
   const units = todayDrinks.reduce((s, d) => s + calcUnits(d.volumeMl, d.abv), 0)
   const cals = todayDrinks.reduce((s, d) => s + approxCalories(d.volumeMl, d.abv), 0)
   const limit = parseFloat(settings.legalLimit)
@@ -43,22 +48,35 @@ export function renderToday() {
   document.getElementById('bac-legal-marker').style.left = legalPct + '%'
   document.getElementById('bac-legal-label').style.left = legalPct + '%'
 
+  document.getElementById('bac-rising').textContent = rising
+    ? `↑ Still absorbing — peaks at ${formatBAC(peak.v, settings.bacUnit)} in ~${formatDuration(peak.t - Date.now())}`
+    : ''
+
   const statusEl = document.getElementById('bac-status')
-  if (bac === 0) {
+  if (verdict === 0) {
     statusEl.textContent = '— Sober —'
     statusEl.className = 'bac-status bac-safe'
-  } else if (bac < limit * 0.5) {
-    statusEl.textContent = 'Below legal limit'
-    statusEl.className = 'bac-status bac-safe'
-  } else if (bac < limit) {
-    statusEl.textContent = 'Approaching limit'
-    statusEl.className = 'bac-status bac-caution'
-  } else {
+  } else if (bac < limit && peak.v >= limit) {
+    statusEl.textContent = 'Heading over legal limit'
+    statusEl.className = 'bac-status bac-danger'
+  } else if (bac >= limit) {
     statusEl.textContent = 'Over legal limit'
     statusEl.className = 'bac-status bac-danger'
+  } else if (verdict < limit * 0.5) {
+    statusEl.textContent = 'Below legal limit'
+    statusEl.className = 'bac-status bac-safe'
+  } else {
+    statusEl.textContent = 'Approaching limit'
+    statusEl.className = 'bac-status bac-caution'
   }
 
-  document.getElementById('bac-sober-time').textContent = getSoberTime(bac)
+  const now = Date.now()
+  const belowT = belowLimitAt(bacDrinks, settings, limit, now)
+  const soberT = soberAt(bacDrinks, settings, now)
+  const timings = []
+  if (belowT) timings.push(`Under ${formatBAC(limit, settings.bacUnit)} in ~${formatDuration(belowT - now)}`)
+  if (soberT) timings.push(`${timings.length ? 'sober' : 'Sober'} in ~${formatDuration(soberT - now)}`)
+  document.getElementById('bac-sober-time').textContent = timings.join(' · ')
 
   // Draw live BAC chart; the 4-day drink set lets panning reach past days
   const chartCanvas = document.getElementById('now-bac-chart')

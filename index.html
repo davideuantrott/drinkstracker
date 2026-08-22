@@ -36,6 +36,7 @@
         <div class="bac-label-top">Blood Alcohol Content</div>
         <div class="bac-number mono" id="bac-display">0.00</div>
         <div class="bac-unit-text" id="bac-unit-label">‰ permille</div>
+        <div class="bac-rising" id="bac-rising"></div>
         <div class="bac-bar-wrap" id="bac-bar-wrap">
           <div class="bac-bar-fill" id="bac-bar-fill" style="width:0%"></div>
           <div class="bac-legal-marker" id="bac-legal-marker" style="left:50%"></div>
@@ -43,6 +44,7 @@
         </div>
         <div class="bac-status bac-safe" id="bac-status">— Sober —</div>
         <div class="bac-sober-time" id="bac-sober-time"></div>
+        <div class="bac-disclaimer">Conservative estimate — never a fitness-to-drive decision</div>
       </div>
 
       <div class="now-chart-wrap">
@@ -188,8 +190,8 @@
         <div class="settings-row">
           <div><div class="settings-row-label">Legal Limit</div><div class="settings-row-sub">‰ permille (UK: 0.80)</div></div>
           <select class="settings-select" id="s-legal-limit">
-            <option value="0.50">0.50 ‰</option>
-            <option value="0.80" selected>0.80 ‰</option>
+            <option value="0.50">0.50 ‰ — Scotland</option>
+            <option value="0.80" selected>0.80 ‰ — England/Wales/NI</option>
             <option value="1.00">1.00 ‰</option>
           </select>
         </div>

@@ -235,6 +235,9 @@ html, body {
 }
 .bac-status { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; margin-top: 28px; }
 .bac-sober-time { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: 'Roboto Mono', monospace; }
+.bac-rising { font-size: 12px; font-weight: 600; color: var(--amber); margin-top: 8px; letter-spacing: 0.03em; min-height: 0; }
+.bac-rising:empty { display: none; }
+.bac-disclaimer { font-size: 10px; color: var(--muted); opacity: 0.6; margin-top: 10px; letter-spacing: 0.03em; }
 
 /* ---- STATS ROW ---- */
 .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 16px; }

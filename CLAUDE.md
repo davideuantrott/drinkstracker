@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 3.2 (live)
+## Current state — Build 3.3 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -82,6 +82,18 @@ Changes made in Build 3.2:
   - **Default window is now the last 12 h** — `drawNowBACChart` no longer stretches `tStart` back to the first drink in the buffer; older drinking is reached by panning (still up to 3 days), which is what the pan gesture was for
   - **Chart labels follow the BAC unit setting** — Y-axis gridline labels and the LIMIT line ran through `toFixed(2)` (raw permille) while the hero showed `% BAC`; both charts now format via `formatBAC(v, settings.bacUnit)`, the limit line is labelled with its value ("LIMIT 0.080"), and the left gutter is measured from the widest label instead of a fixed 28 px that clipped `%` labels
 - **Hero and chart share one drink set** — `renderToday()` computed the hero BAC from a 24 h lookback but drew the chart from a 4-day one; both now use the same 4-day list, so the number and the curve can never diverge
+
+Changes made in Build 3.3:
+- **BAC model is now deliberately conservative** — every parameter in `src/bac.js` moved to the cautious end of its published range, so the displayed number is a high estimate rather than a central one:
+  - **Widmark `r` at one SD below the mean** — 0.68 → 0.595 (male), 0.55 → 0.495 (female). Widmark's own SDs are ±0.085 / ±0.055; a lower `r` means a smaller volume of distribution and so a higher BAC. Covers roughly 84% of people rather than 50%
+  - **Blood-density conversion added** — Widmark's `r` was derived with BAC expressed per unit *mass* of blood (g/kg) while legal limits are per unit *volume* (mg/100 ml), so the dose is multiplied by 1.055 (the high end of the quoted specific-gravity range). Adds ~5%
+  - **Elimination at 0.10‰/h** (was 0.15) — the slow end of the ~0.10–0.20 population range. Holds BAC higher through a session and pushes the sober estimate later. Note this compounds with elapsed time: a morning-after reading is several times higher than a 0.15‰/h model would give
+  - **30-minute absorption ramp** — a drink no longer lands as an instant vertical step; each dose absorbs linearly over 30 min from its timestamp (drinks are logged at the last sip, so some absorption has already happened, but not all)
+- **One curve, one model** — `_curve()` builds the exact piecewise-linear knots (absorption ramps in, elimination drains whenever anything is left) and `calcBACPermille`, `calcBACAtTime`, `bacCurvePoints`, `peakAhead`, `soberAt` and `belowLimitAt` all read off it. This removed the duplicated model that the old `_poolBAC` / `bacCurvePoints` pair carried
+- **Pending peak surfaced on the Now tab** — with absorption modelled, a drink logged two minutes ago shows a near-zero current BAC while a much higher peak is 30 min away. The hero now shows an amber "↑ Still absorbing — peaks at X in ~Nm" line, and the status verdict uses `max(current, peak)` so it reads "Heading over legal limit" rather than "Below legal limit"
+- **Time-to-legal alongside time-to-sober** — `belowLimitAt()` finds the last downward crossing of the configured limit (so a pending peak pushes it out), shown as "Under 0.080 in ~1h 29m · sober in ~9h 29m"
+- **Legal-limit picker labelled by jurisdiction** — "0.50 ‰ — Scotland", "0.80 ‰ — England/Wales/NI"
+- **Standing disclaimer under the hero** — "Conservative estimate — never a fitness-to-drive decision"
 
 ---
 
@@ -241,7 +253,8 @@ From `alcotrack-claude-code-handoff.md`:
 | BAC charts use raw canvas | Works fine; could move to Chart.js for maintainability |
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
 | Calories are approximate | Labelled "~" in UI; consider a tooltip explaining the Widmark-based estimate |
-| Chart curves assume the pool model | `bacCurvePoints` hardcodes the piecewise-linear shape of `_poolBAC`; a model change (e.g. gradual absorption) means updating both |
+| BAC constants are a deliberate upper bound | Conservative `r`, blood density, elimination and absorption stack multiplicatively; readings run ~20% above a textbook Widmark calculation and clear ~50% slower. Intentional, but it means numbers will not match AlcoDroid or online calculators |
+| `r` is still sex-based, not body-composition-based | A height field plus a Watson total-body-water estimate would beat a flat constant; would need a new Profile input |
 
 ---
 
@@ -249,9 +262,13 @@ From `alcotrack-claude-code-handoff.md`:
 
 | Function | File | What it does |
 |---|---|---|
-| `calcBACPermille(drinks, settings)` | `src/bac.js` | Widmark formula, returns current BAC in permille |
-| `calcBACAtTime(drinks, t, settings)` | `src/bac.js` | BAC at a specific timestamp (used for chart) |
-| `bacCurvePoints(drinks, tStart, tEnd, settings)` | `src/bac.js` | Exact knots of the BAC curve over a window — used by both BAC charts so peaks are never clipped by sampling |
+| `calcBACPermille(drinks, settings)` | `src/bac.js` | Current BAC in permille, read off the conservative curve |
+| `calcBACAtTime(drinks, t, settings)` | `src/bac.js` | BAC at a specific timestamp |
+| `bacCurvePoints(drinks, tStart, tEnd, settings)` | `src/bac.js` | Exact knots of the BAC curve clipped to a window — used by both BAC charts, so peaks are never clipped by sampling |
+| `peakAhead(drinks, settings, fromT)` | `src/bac.js` | Highest BAC still to come `{t, v}` — non-zero while a drink is still absorbing |
+| `soberAt(drinks, settings, fromT)` | `src/bac.js` | Timestamp the curve reaches zero, or null if already there |
+| `belowLimitAt(drinks, settings, limit, fromT)` | `src/bac.js` | Timestamp the curve drops below `limit` for good (accounts for a pending peak) |
+| `formatDuration(ms)` | `src/bac.js` | "1h 29m" / "45m" for the sober/legal countdowns |
 | `calcUnits(volumeMl, abv)` | `src/bac.js` | UK units = `(vol × abv) / 1000` |
 | `initStorage()` | `src/storage.js` | Load from localStorage, migrate old IDs to UUIDs |
 | `addLogEntry(entry)` | `src/storage.js` | Write to localStorage + queue Supabase upsert |
