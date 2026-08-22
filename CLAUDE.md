@@ -118,7 +118,7 @@ drinkstracker/
 └── src/
     ├── main.js             ← entry point; boots app, handles auth state
     ├── style.css           ← all CSS (design tokens, layout, every component)
-    ├── bac.js              ← pure BAC calculation functions (Widmark formula)
+    ├── bac.js              ← the whole BAC model: one curve, read by everything (see BAC model reference)
     ├── auth.js             ← Supabase client + auth helpers
     ├── storage.js          ← state manager: localStorage + Supabase sync layer
     ├── charts.js           ← canvas charts: now BAC, daily BAC, weekly/monthly/cals bars
@@ -209,6 +209,81 @@ Fonts: `Poppins` (UI/headings, 400–800) + `Roboto Mono` (numeric values, 300�
 
 ---
 
+## BAC model reference
+
+All of this lives in `src/bac.js`. Read this before changing any constant — each
+one was chosen deliberately, and they compound.
+
+### The equation
+
+For each drink, the dose in permille is
+
+```
+dose‰ = (volumeMl × abv/100) × 0.789 × 1.055 / (weightKg × r)
+```
+
+That dose is absorbed **linearly over 30 minutes** from the drink's timestamp,
+and the body eliminates at a flat **0.10‰/h** whenever anything is left in the
+pool. `_curve()` walks the breakpoints (every ramp start and end) and emits the
+exact piecewise-linear knots; everything else — current BAC, chart curves, peak,
+sober time, time-to-legal — reads off that one curve.
+
+### Constants and why they are where they are
+
+| Constant | Value | Rationale |
+|---|---|---|
+| `r` male | **0.595** | Widmark mean 0.68 − 1 SD (0.085). Lower `r` = smaller volume of distribution = higher BAC. Covers ~84% of people |
+| `r` female | **0.495** | Widmark mean 0.55 − 1 SD (0.055) |
+| blood density | **1.055** | Widmark's `r` was derived with BAC per unit *mass* of blood (g/kg); legal limits are per unit *volume* (mg/100 ml). Quoted specific gravity runs ~1.03–1.055; we take the high end. Adds ~5% |
+| elimination | **0.10‰/h** | Population range ~0.10–0.20‰/h. Slow end holds BAC higher through a session *and* pushes sober later |
+| absorption | **30 min linear** | Drinks are logged at the last sip, so some absorption has already happened — but not all |
+| ethanol density | 0.789 g/ml | Physical constant, not a choice |
+
+Together these read roughly **20% above** a textbook Widmark calculation, and
+clear roughly **50% slower**. That is the intent: the number is a high estimate,
+not a central one.
+
+**The elimination rate compounds with elapsed time and the other constants do
+not.** Peak readings sit ~20% above a standard model; a morning-after reading
+after a heavy night can be 3× higher, because 0.10 vs 0.15‰/h diverges every
+hour that passes. If the morning-after numbers ever become noise the user learns
+to ignore, **0.12‰/h** is the obvious dial to turn — still cautious, far less
+divergent over long gaps. Considered and deliberately not taken in Build 3.3.
+
+### Reference values (75 kg male, 0.80‰ limit)
+
+Useful as a regression check after touching the model:
+
+| Drink | Peak | Under 0.80‰ after | Sober after |
+|---|---|---|---|
+| 1 pint 4.5% (2.6 units) | 0.427‰ | never over | 4h 46m |
+| 175 ml wine 13% (2.3 units) | 0.374‰ | never over | 4h 15m |
+| 750 ml cider 6.8% (5.1 units) | 0.901‰ | 1h 31m | 9h 31m |
+| 4 pints over 3 h (10.2 units) | 1.557‰ | 8h 4m | 16h 4m |
+
+Times are measured from the last sip.
+
+### Rules that fall out of the model
+
+- **The verdict must use `max(current, peakAhead)`.** Modelling absorption means
+  a drink logged two minutes ago reads near zero while a much higher peak is
+  half an hour out — a naive "current BAC vs limit" check would say "Below legal
+  limit" at the single most misleading moment. `renderToday()` shows the amber
+  "still absorbing" line and takes the peak into the status text.
+- **Charts must read `bacCurvePoints`, never their own sampling.** Fixed
+  sampling clips peaks (see Build 3.2).
+- **Units and calories are unaffected** by any of this — they are objective
+  figures from volume and ABV, so they stay comparable with any other tracker.
+
+### Not modelled
+
+Food, drinking speed, gastric emptying, medication, illness, tolerance, and any
+individual variation beyond sex and weight. UK limits for reference: **80 mg per
+100 ml** in England/Wales/NI, **50 mg** in Scotland (both selectable in Profile).
+
+
+---
+
 ## Local development setup
 
 ```bash
@@ -243,6 +318,55 @@ From `alcotrack-claude-code-handoff.md`:
 - Deduplication on `(timestamp, volumeMl, abv)` after import
 - After import, sync to Supabase via the existing sync layer
 
+### Personalised Widmark factor via Watson TBW — evaluated, deferred (Aug 2026)
+
+Replace the flat sex-based `r` with one derived from the user's own body water.
+[Watson (1980)](https://www.semanticscholar.org/paper/Total-body-water-volumes-for-adult-males-and-from-Watson-Watson/098d4cd37a32284694c80751c112d6f00ca23ce0)
+estimates total body water from anthropometry:
+
+```
+male:    TBW = 2.447 − 0.09156 × age + 0.1074 × height_cm + 0.3362 × weight_kg
+female:  TBW = −2.097            + 0.1069 × height_cm + 0.2466 × weight_kg
+r = TBW / (0.8 × weight_kg)          // blood is ~80% water by mass
+```
+
+**Inputs needed:** height and age — nothing else; sex and weight are already in
+Profile. Age should be stored as year of birth so it does not go stale. The
+female equation does not use age at all.
+
+**Why it was deferred:** Watson-derived `r` comes out *higher* than Widmark's
+constants for most builds, and a higher `r` means a lower BAC. Worked examples
+against the current fixed values:
+
+| Body | Watson `r` | current `r` | cider peak (Watson / current) |
+|---|---|---|---|
+| M, 40, 178 cm, 75 kg | 0.719 | 0.595 | 0.79‰ / 0.95‰ |
+| M, 25, 190 cm, 80 kg | 0.742 | 0.595 | 0.72‰ / 0.89‰ |
+| M, 60, 170 cm, 80 kg | 0.658 | 0.595 | 0.81‰ / 0.89‰ |
+| F, 40, 165 cm, 65 kg | 0.607 | 0.495 | 1.08‰ / 1.32‰ |
+
+For an average-build man that is a ~17% drop — the 5.1-unit cider goes back
+under the limit. That is not Watson being wrong; personalising removes the
+uncertainty the one-SD margin was insuring against, so a better model *earns* a
+narrower margin. Adopting it means either accepting ~10% lower readings (margin
+re-derived from the Watson residual rather than the population SD of `r`), or
+applying a flat haircut sized to preserve today's numbers — which makes the
+personalisation largely cosmetic. Build 3.3 chose caution over precision.
+
+**Two traps if it is ever picked up:**
+- Watson **over-estimates TBW in obesity** (fat is ~10% water), inflating `r`
+  and under-stating BAC — the failure mode points the wrong way for the group
+  most at risk. Fall back to the fixed constant above ~30 BMI.
+- **Body-fat % beats height.** `lean = W × (1 − bodyfat)`, `TBW ≈ 0.72 × lean`,
+  `r = TBW / (0.8 × W)` is more direct and has no obesity failure mode. One
+  optional field, better answer than two — but only worth it if the user
+  actually tracks body fat.
+
+Suggested shape if built: height and year of birth as **optional** fields, Watson
+used only when both are filled, fixed constants otherwise, and an optional
+body-fat field that overrides Watson when present. Nothing regresses for a fresh
+install.
+
 ### Magic link / passwordless auth
 - Third auth option in the auth screen alongside Google and email/password
 - Supabase supports this out of the box: `supabase.auth.signInWithOtp({ email })`
@@ -254,7 +378,8 @@ From `alcotrack-claude-code-handoff.md`:
 | No data validation on import | Add min/max sanity checks on `volumeMl` and `abv` |
 | Calories are approximate | Labelled "~" in UI; consider a tooltip explaining the Widmark-based estimate |
 | BAC constants are a deliberate upper bound | Conservative `r`, blood density, elimination and absorption stack multiplicatively; readings run ~20% above a textbook Widmark calculation and clear ~50% slower. Intentional, but it means numbers will not match AlcoDroid or online calculators |
-| `r` is still sex-based, not body-composition-based | A height field plus a Watson total-body-water estimate would beat a flat constant; would need a new Profile input |
+| `r` is still sex-based, not body-composition-based | A height + age (Watson TBW) or body-fat input would personalise it — evaluated and deferred, see Build 4 notes above for formulas and the accuracy/caution trade-off |
+| Elimination rate is not user-adjustable | 0.10‰/h is hardcoded; 0.12 is the obvious fallback if morning-after readings prove too alarmist. See the BAC model reference |
 
 ---
 
