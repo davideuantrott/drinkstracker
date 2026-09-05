@@ -6,7 +6,7 @@ AlcoTrack is a personal alcohol tracking Progressive Web App (PWA) targeting iPh
 
 ---
 
-## Current state — Build 3.3 (live)
+## Current state — Build 3.4 (live)
 
 Build 1 was a single self-contained HTML file (`alcotracker.html`, ~1600 lines, kept as backup). Build 2, implemented in this repo, is a full Vite project with Supabase auth and cloud sync. **The app is live and fully functional.**
 
@@ -94,6 +94,10 @@ Changes made in Build 3.3:
 - **Time-to-legal alongside time-to-sober** — `belowLimitAt()` finds the last downward crossing of the configured limit (so a pending peak pushes it out), shown as "Under 0.080 in ~1h 29m · sober in ~9h 29m"
 - **Legal-limit picker labelled by jurisdiction** — "0.50 ‰ — Scotland", "0.80 ‰ — England/Wales/NI"
 - **Standing disclaimer under the hero** — "Conservative estimate — never a fitness-to-drive decision"
+
+Changes made in Build 3.4:
+- **Rounded chart lines** - all polyline paths in `src/charts.js` (both BAC curves and the rolling-average line on the Weekly/Monthly/Cals bar charts) now run through a shared `_roundedPath()` helper that replaces each interior vertex with a short quadratic arc, so the lines read as curves rather than straight runs meeting at sharp angles. The arc leaves and rejoins the legs `CURVE_R` (9) px out from the corner, capped at 40% of the shorter leg so closely-spaced knots are never swallowed. The fill under each BAC curve traces the same rounded path so it stays flush with the stroke
+- **Why corner-cutting and not a spline** - a Catmull-Rom or through-points bezier overshoots between knots, inventing peaks the BAC model never produced; that would undo the Build 3.2 fix which made the charts draw exact curve knots. Corner-cutting only ever pulls *inside* the polyline, so the drawn curve stays within the true envelope. Measured worst case on a sharp peak: the apex sits ~1.9 px lower than the exact knot, purely cosmetic - the hero readout is still the authoritative number
 
 ---
 

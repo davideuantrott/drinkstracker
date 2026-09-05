@@ -14,6 +14,38 @@ function _labelGutter(ctx, labels) {
   return Math.ceil(Math.max(...labels.map(l => ctx.measureText(l).width))) + 7
 }
 
+// Trace a polyline with its corners rounded off, so a line reads as a curve
+// rather than a run of straight segments meeting at sharp angles. Each interior
+// vertex is replaced by a quadratic arc that leaves and rejoins the legs `r` px
+// out from the corner, with r capped at 40% of the shorter leg so short
+// segments are never swallowed.
+//
+// Corner-cutting only ever pulls *inside* the polyline, so the drawn curve stays
+// within the envelope of the exact knots. A spline (Catmull-Rom, bezier through
+// points) would overshoot instead and invent peaks the BAC model never produced
+// - the opposite of the Build 3.2 fix that made these charts draw exact knots.
+// `CURVE_R` is small for the same reason: at a sharp peak the arc sits at most
+// r/2 below the vertex, so the visible softening is ~3 px.
+const CURVE_R = 9
+
+function _roundedPath(ctx, pts, r = CURVE_R, continuePath = false) {
+  if (!pts.length) return
+  continuePath ? ctx.lineTo(pts[0].x, pts[0].y) : ctx.moveTo(pts[0].x, pts[0].y)
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i - 1], cur = pts[i], next = pts[i + 1]
+    const d1 = Math.hypot(cur.x - prev.x, cur.y - prev.y)
+    const d2 = Math.hypot(next.x - cur.x, next.y - cur.y)
+    if (d1 < 0.01 || d2 < 0.01) { ctx.lineTo(cur.x, cur.y); continue }
+    const rr = Math.min(r, d1 * 0.4, d2 * 0.4)
+    ctx.lineTo(cur.x - ((cur.x - prev.x) / d1) * rr, cur.y - ((cur.y - prev.y) / d1) * rr)
+    ctx.quadraticCurveTo(
+      cur.x, cur.y,
+      cur.x + ((next.x - cur.x) / d2) * rr, cur.y + ((next.y - cur.y) / d2) * rr
+    )
+  }
+  if (pts.length > 1) ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y)
+}
+
 // ── Now-tab live BAC chart ───────────────────────────────────────────────────
 
 export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
@@ -90,22 +122,26 @@ export function drawNowBACChart(canvas, drinks, settings, panOffsetMs = 0) {
   grad.addColorStop(halfFrac,   'rgba(52,211,153,0.55)')
   grad.addColorStop(1,          'rgba(52,211,153,0.08)')
 
+  const xy = pts.map(p => ({ x: toX(p.t), y: toY(p.v) }))
+
   ctx.beginPath()
-  ctx.moveTo(toX(pts[0].t), PT + cH)
-  pts.forEach(p => ctx.lineTo(toX(p.t), toY(p.v)))
-  ctx.lineTo(toX(pts[pts.length - 1].t), PT + cH)
+  ctx.moveTo(xy[0].x, PT + cH)
+  _roundedPath(ctx, xy, CURVE_R, true)
+  ctx.lineTo(xy[xy.length - 1].x, PT + cH)
   ctx.closePath()
   ctx.fillStyle = grad
   ctx.fill()
 
   // Curve
+  ctx.save()
   ctx.beginPath()
   ctx.strokeStyle = 'rgba(255,255,255,0.75)'
   ctx.lineWidth = 1.5
-  pts.forEach((p, i) => {
-    i === 0 ? ctx.moveTo(toX(p.t), toY(p.v)) : ctx.lineTo(toX(p.t), toY(p.v))
-  })
+  ctx.lineJoin = 'round'
+  ctx.lineCap = 'round'
+  _roundedPath(ctx, xy)
   ctx.stroke()
+  ctx.restore()
 
   // Current-time marker (only draw when visible)
   const nowX = toX(now)
@@ -224,21 +260,25 @@ export function drawDailyBACChart(canvas, todayDrinks, settings) {
   grad.addColorStop(halfFrac,  'rgba(52,211,153,0.55)')
   grad.addColorStop(1,         'rgba(52,211,153,0.08)')
 
+  const xy = pts.map(p => ({ x: toX(p.t), y: toY(p.v) }))
+
   ctx.beginPath()
-  ctx.moveTo(toX(pts[0].t), PT + cH)
-  pts.forEach(p => ctx.lineTo(toX(p.t), toY(p.v)))
-  ctx.lineTo(toX(pts[pts.length - 1].t), PT + cH)
+  ctx.moveTo(xy[0].x, PT + cH)
+  _roundedPath(ctx, xy, CURVE_R, true)
+  ctx.lineTo(xy[xy.length - 1].x, PT + cH)
   ctx.closePath()
   ctx.fillStyle = grad
   ctx.fill()
 
+  ctx.save()
   ctx.beginPath()
   ctx.strokeStyle = 'rgba(255,255,255,0.75)'
   ctx.lineWidth = 1.5
-  pts.forEach((p, i) => {
-    i === 0 ? ctx.moveTo(toX(p.t), toY(p.v)) : ctx.lineTo(toX(p.t), toY(p.v))
-  })
+  ctx.lineJoin = 'round'
+  ctx.lineCap = 'round'
+  _roundedPath(ctx, xy)
   ctx.stroke()
+  ctx.restore()
 
   const nowX = toX(now)
   ctx.save()
@@ -376,15 +416,18 @@ function _drawBarChart(ctx, W, H, days, n, showDayLabels, mode = 'units') {
     return slice.reduce((s, d) => s + getValue(d), 0) / slice.length
   })
 
+  ctx.save()
   ctx.beginPath()
   ctx.strokeStyle = 'rgba(255,204,0,0.8)'
   ctx.lineWidth = 1.5
-  avgPts.forEach((v, i) => {
-    const x = PL + i * barSlot + barSlot / 2
-    const y = PT + cH - (v / maxVal) * cH
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-  })
+  ctx.lineJoin = 'round'
+  ctx.lineCap = 'round'
+  _roundedPath(ctx, avgPts.map((v, i) => ({
+    x: PL + i * barSlot + barSlot / 2,
+    y: PT + cH - (v / maxVal) * cH
+  })))
   ctx.stroke()
+  ctx.restore()
 
   // Legend
   ctx.fillStyle = 'rgba(255,204,0,0.8)'
